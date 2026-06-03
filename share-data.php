@@ -1,0 +1,410 @@
+<?php
+declare(strict_types=1);
+
+const MF_FAVORITES_PARAM = 'f';
+const MF_LIST_PARAM = 'liste';
+const MF_LIST_NAME_PARAM = 'navn';
+const MF_DEFAULT_LIST_NAME = 'Favoritter';
+const MF_PUBLIC_BASE = 'https://suboktav.no/musikkfest';
+
+function mf_html_path(): string {
+    $indexPath = __DIR__ . '/index.html';
+    if (is_file($indexPath)) {
+        return $indexPath;
+    }
+    return __DIR__ . '/Musikkens-dag-2026-Program.html';
+}
+
+function mf_storage_dir(): string {
+    $dir = dirname(__DIR__) . '/.musikkfest-lister';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+    return $dir;
+}
+
+function mf_lists_path(): string {
+    return mf_storage_dir() . '/lists.json';
+}
+
+function mf_list_lock_path(): string {
+    return mf_storage_dir() . '/lists.lock';
+}
+
+function mf_clean_list_name(?string $raw): string {
+    $name = trim((string) $raw);
+    $name = preg_replace('/\s+/u', ' ', $name) ?? '';
+    if ($name === '') {
+        return MF_DEFAULT_LIST_NAME;
+    }
+    return mb_substr($name, 0, 60, 'UTF-8');
+}
+
+function mf_slugify(string $name): string {
+    $value = mb_strtolower(trim($name), 'UTF-8');
+    $value = strtr($value, [
+        'æ' => 'ae', 'ø' => 'o', 'å' => 'a',
+        'ä' => 'a', 'ö' => 'o', 'ü' => 'u',
+        'é' => 'e', 'è' => 'e', 'ê' => 'e', 'á' => 'a',
+        'à' => 'a', 'ó' => 'o', 'ò' => 'o', 'í' => 'i',
+        'ì' => 'i', 'ç' => 'c', 'ñ' => 'n',
+    ]);
+    $value = preg_replace('/[^a-z0-9]+/', '-', $value) ?? '';
+    $value = trim($value, '-');
+    return $value !== '' ? substr($value, 0, 64) : 'liste';
+}
+
+function mf_clean_slug(?string $raw): string {
+    $slug = strtolower((string) $raw);
+    $slug = preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+    return trim(substr($slug, 0, 80), '-');
+}
+
+function mf_reserved_slugs(): array {
+    $reserved = [
+        'api' => true,
+        'del' => true,
+        'del-bilde' => true,
+        'share' => true,
+        'share-image' => true,
+        'assets' => true,
+        'bilder' => true,
+        'kart' => true,
+        'favoritter' => true,
+        'program' => true,
+    ];
+    foreach (mf_stage_route_slugs() as $slug) {
+        $reserved[$slug] = true;
+    }
+    return $reserved;
+}
+
+function mf_stage_route_slugs(): array {
+    $slugs = [];
+    foreach (mf_events() as $event) {
+        $stage = (string) ($event['stage'] ?? '');
+        if ($stage === '') {
+            continue;
+        }
+        $slug = mf_slugify($stage);
+        if ($slug !== '') {
+            $slugs[$slug] = true;
+        }
+    }
+    return array_keys($slugs);
+}
+
+function mf_read_lists_unlocked(): array {
+    $path = mf_lists_path();
+    if (!is_file($path)) {
+        return ['lists' => [], 'tokens' => []];
+    }
+    $json = json_decode((string) @file_get_contents($path), true);
+    if (!is_array($json)) {
+        return ['lists' => [], 'tokens' => []];
+    }
+    return [
+        'lists' => is_array($json['lists'] ?? null) ? $json['lists'] : [],
+        'tokens' => is_array($json['tokens'] ?? null) ? $json['tokens'] : [],
+    ];
+}
+
+function mf_write_lists_unlocked(array $store): void {
+    $payload = json_encode($store, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    if ($payload === false) {
+        return;
+    }
+    @file_put_contents(mf_lists_path(), $payload . "\n", LOCK_EX);
+}
+
+function mf_slug_directory(string $slug): string {
+    return __DIR__ . '/' . $slug;
+}
+
+function mf_slug_available(string $slug, string $token, array $store): bool {
+    if ($slug === '' || isset(mf_reserved_slugs()[$slug])) {
+        return false;
+    }
+    $existing = $store['lists'][$slug] ?? null;
+    if (is_array($existing) && (($existing['token'] ?? '') !== $token)) {
+        return false;
+    }
+    $dir = mf_slug_directory($slug);
+    if (is_dir($dir)) {
+        return is_array($existing) && (($existing['token'] ?? '') === $token);
+    }
+    if (is_file(__DIR__ . '/' . $slug)) {
+        return false;
+    }
+    return true;
+}
+
+function mf_unique_slug(string $base, string $token, array $store): string {
+    $base = mf_clean_slug($base) ?: 'liste';
+    for ($i = 0; $i < 1000; $i++) {
+        $slug = $i === 0 ? $base : $base . ($i + 1);
+        if (mf_slug_available($slug, $token, $store)) {
+            return $slug;
+        }
+    }
+    return $base . '-' . substr($token, 0, 8);
+}
+
+function mf_write_slug_route(string $slug): void {
+    $dir = mf_slug_directory($slug);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($dir . '/.musikkfest-list', $slug . "\n");
+    $php = "<?php\n"
+        . "declare(strict_types=1);\n\n"
+        . '$_GET[' . var_export(MF_LIST_PARAM, true) . '] = ' . var_export($slug, true) . ";\n"
+        . "require __DIR__ . '/../share.php';\n";
+    @file_put_contents($dir . '/index.php', $php);
+    @chmod($dir, 0755);
+    @chmod($dir . '/index.php', 0644);
+    @chmod($dir . '/.musikkfest-list', 0644);
+}
+
+function mf_write_slug_redirect(string $fromSlug, string $toSlug): void {
+    $dir = mf_slug_directory($fromSlug);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($dir . '/.musikkfest-list', $fromSlug . "\n");
+    $target = MF_PUBLIC_BASE . '/' . $toSlug;
+    $php = "<?php\n"
+        . "declare(strict_types=1);\n\n"
+        . 'header("Location: ' . $target . '", true, 301);' . "\n"
+        . "exit;\n";
+    @file_put_contents($dir . '/index.php', $php);
+    @chmod($dir, 0755);
+    @chmod($dir . '/index.php', 0644);
+    @chmod($dir . '/.musikkfest-list', 0644);
+}
+
+function mf_normalize_token(?string $raw): string {
+    $token = strtolower((string) $raw);
+    return preg_match('/^[a-f0-9]{32}$/', $token) ? $token : bin2hex(random_bytes(16));
+}
+
+function mf_save_named_list(?string $tokenRaw, string $nameRaw, string $shareCode): array {
+    $name = mf_clean_list_name($nameRaw);
+    $base = mf_slugify($name);
+    $token = mf_normalize_token($tokenRaw);
+    $code = mf_clean_share_code($shareCode);
+    $lock = @fopen(mf_list_lock_path(), 'c');
+    if (!$lock) {
+        throw new RuntimeException('Kunne ikke låse listelagring.');
+    }
+
+    flock($lock, LOCK_EX);
+    try {
+        $store = mf_read_lists_unlocked();
+        $currentSlug = (string) ($store['tokens'][$token] ?? '');
+        $current = $currentSlug !== '' && is_array($store['lists'][$currentSlug] ?? null) ? $store['lists'][$currentSlug] : null;
+        $currentBase = is_array($current) ? (string) ($current['base'] ?? '') : '';
+        $slug = ($current && $currentBase === $base) ? $currentSlug : mf_unique_slug($base, $token, $store);
+
+        if ($currentSlug !== '' && $currentSlug !== $slug && is_array($store['lists'][$currentSlug] ?? null)) {
+            unset($store['lists'][$currentSlug]);
+            mf_write_slug_redirect($currentSlug, $slug);
+        }
+
+        $record = [
+            'token' => $token,
+            'slug' => $slug,
+            'base' => $base,
+            'name' => $name,
+            'code' => $code,
+            'updatedAt' => gmdate('c'),
+        ];
+        $store['lists'][$slug] = $record;
+        $store['tokens'][$token] = $slug;
+        mf_write_lists_unlocked($store);
+        mf_write_slug_route($slug);
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+
+    return $record + ['url' => mf_named_share_url($slug)];
+}
+
+function mf_named_list(string $slug): ?array {
+    $slug = mf_clean_slug($slug);
+    if ($slug === '') {
+        return null;
+    }
+    $store = mf_read_lists_unlocked();
+    $record = $store['lists'][$slug] ?? null;
+    return is_array($record) ? $record : null;
+}
+
+function mf_named_share_url(string $slug): string {
+    return MF_PUBLIC_BASE . '/' . mf_clean_slug($slug);
+}
+
+function mf_event_id(string $time, string $artist, string $genre, string $stage): string {
+    return $time . '||' . $artist . '||' . $genre . '||' . $stage;
+}
+
+function mf_events(): array {
+    static $events = null;
+    if ($events !== null) {
+        return $events;
+    }
+
+    $html = @file_get_contents(mf_html_path());
+    if ($html === false) {
+        return $events = [];
+    }
+    if (!preg_match('/const RAW = (\[[\s\S]*?\n\]);/', $html, $match)) {
+        return $events = [];
+    }
+
+    $raw = json_decode($match[1], true);
+    if (!is_array($raw)) {
+        return $events = [];
+    }
+
+    $events = [];
+    foreach ($raw as $row) {
+        if (!is_array($row) || count($row) < 4) {
+            continue;
+        }
+        $time = (string) $row[0];
+        $artist = (string) $row[1];
+        $genre = (string) $row[2];
+        $stage = (string) $row[3];
+        $objectId = isset($row[4]) ? (string) $row[4] : '';
+        $events[] = [
+            'id' => $objectId !== '' ? $objectId : mf_event_id($time, $artist, $genre, $stage),
+            'time' => $time,
+            'artist' => $artist,
+            'genre' => $genre,
+            'stage' => $stage,
+        ];
+    }
+    return $events;
+}
+
+function mf_clean_share_code(?string $raw): string {
+    $raw = strtolower((string) $raw);
+    $raw = preg_replace('/[^0-9a-z.]/', '', $raw) ?? '';
+    return substr($raw, 0, 1800);
+}
+
+function mf_minutes(string $time): int {
+    if (!preg_match('/^(\d{1,2}):(\d{2})$/', $time, $match)) {
+        return 99999;
+    }
+    return ((int) $match[1]) * 60 + (int) $match[2];
+}
+
+function mf_favorite_events(string $shareCode): array {
+    $events = mf_events();
+    if ($shareCode === '' || !$events) {
+        return [];
+    }
+
+    $seen = [];
+    $favorites = [];
+    foreach (explode('.', $shareCode) as $part) {
+        if ($part === '' || !preg_match('/^[0-9a-z]+$/', $part)) {
+            continue;
+        }
+        $index = intval($part, 36);
+        if (!isset($events[$index])) {
+            continue;
+        }
+        $event = $events[$index];
+        if (isset($seen[$event['id']])) {
+            continue;
+        }
+        $seen[$event['id']] = true;
+        $favorites[] = $event;
+    }
+
+    usort($favorites, static function (array $a, array $b): int {
+        return mf_minutes($a['time']) <=> mf_minutes($b['time'])
+            ?: strcmp($a['stage'], $b['stage'])
+            ?: strcmp($a['artist'], $b['artist']);
+    });
+
+    return $favorites;
+}
+
+function mf_share_url(string $shareCode, ?string $name = null): string {
+    $base = MF_PUBLIC_BASE . '/del/';
+    $params = [];
+    if ($shareCode !== '') {
+        $params[MF_FAVORITES_PARAM] = $shareCode;
+    }
+    $cleanName = mf_clean_list_name($name);
+    if ($cleanName !== MF_DEFAULT_LIST_NAME) {
+        $params[MF_LIST_NAME_PARAM] = $cleanName;
+    }
+    return $params ? $base . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) : $base;
+}
+
+function mf_app_url(string $shareCode, ?string $name = null, ?string $slug = null): string {
+    $base = MF_PUBLIC_BASE . '/';
+    $params = [];
+    if ($shareCode !== '') {
+        $params[MF_FAVORITES_PARAM] = $shareCode;
+    }
+    $cleanName = mf_clean_list_name($name);
+    if ($cleanName !== MF_DEFAULT_LIST_NAME) {
+        $params[MF_LIST_NAME_PARAM] = $cleanName;
+    }
+    $cleanSlug = mf_clean_slug($slug);
+    if ($cleanSlug !== '') {
+        $params[MF_LIST_PARAM] = $cleanSlug;
+    }
+    return $base . ($params ? '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) : '') . '#favoritter';
+}
+
+function mf_share_description(array $events, string $name = MF_DEFAULT_LIST_NAME): string {
+    if (!$events) {
+        return 'Interaktivt program og kart for Musikkfest 2026.';
+    }
+    $top = array_map(static fn (array $event): string => $event['time'] . ' ' . $event['artist'], array_slice($events, 0, 4));
+    $suffix = count($events) > 4 ? ' + ' . (count($events) - 4) . ' til' : '';
+    return mf_clean_list_name($name) . ' på Musikkfest 2026: ' . implode(', ', $top) . $suffix;
+}
+
+function mf_share_context(): array {
+    $slug = mf_clean_slug($_GET[MF_LIST_PARAM] ?? '');
+    $record = $slug !== '' ? mf_named_list($slug) : null;
+    if ($record) {
+        $name = mf_clean_list_name($record['name'] ?? MF_DEFAULT_LIST_NAME);
+        $code = mf_clean_share_code($record['code'] ?? '');
+        $shareUrl = mf_named_share_url($slug);
+        $appUrl = mf_app_url($code, $name, $slug);
+        return [
+            'name' => $name,
+            'code' => $code,
+            'slug' => $slug,
+            'events' => mf_favorite_events($code),
+            'shareUrl' => $shareUrl,
+            'appUrl' => $appUrl,
+        ];
+    }
+
+    $name = mf_clean_list_name($_GET[MF_LIST_NAME_PARAM] ?? MF_DEFAULT_LIST_NAME);
+    $code = mf_clean_share_code($_GET[MF_FAVORITES_PARAM] ?? '');
+    return [
+        'name' => $name,
+        'code' => $code,
+        'slug' => '',
+        'events' => mf_favorite_events($code),
+        'shareUrl' => mf_share_url($code, $name),
+        'appUrl' => mf_app_url($code, $name),
+    ];
+}
+
+function mf_display_url(string $url): string {
+    $value = preg_replace('#^https?://#', '', $url) ?? $url;
+    return rtrim($value, '/');
+}
