@@ -407,6 +407,7 @@ function openEventMapPopup(ev,{updateUrl=true,replaceUrl=false}={}){
   else setEventMeta(ev);
   const snapshot=scheduleSnapshots().find(item=>item.stage===ev.stage);
   if(!venuePopup) venuePopup=new maplibregl.Popup({offset:16,maxWidth:"360px"});
+  scrollVenueMapIntoView({force:true});
   flyToVenuePopup(loc);
   venuePopup
     .setLngLat([loc.lng,loc.lat])

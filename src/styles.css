@@ -1159,7 +1159,11 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
   .map-check-list{max-height:calc(100vh - 210px)}
   .map-favorite-filter,.map-clear-filters{flex:1;justify-content:center}
   .map-shell{grid-template-columns:1fr;height:auto;min-height:0}
-  .venue-map{height:55vh;min-height:360px}
+  .venue-map{
+    height:min(52svh,calc(100dvh - var(--header-h) - var(--tabs-h) - 28px));
+    min-height:min(320px,calc(100dvh - var(--header-h) - var(--tabs-h) - 28px));
+    scroll-margin-top:calc(var(--header-h) + var(--tabs-h) + 8px);
+  }
   .map-sidebar{max-height:none}
   .map-toolbar-row{align-items:flex-start}
   .map-toolbar-controls{justify-content:flex-start}
