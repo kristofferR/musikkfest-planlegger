@@ -26,15 +26,34 @@ function currentMapStyleUrl(){
 }
 
 function venueMapStyleReady(){
-  return Boolean(venueMap)&&mapLoaded&&venueMapStyleLoaded;
+  return Boolean(venueMap)&&mapLoaded&&venueMapStyleLoaded&&venueMap.isStyleLoaded();
+}
+
+function scheduleVenueMapOverlayRefresh(delay=0){
+  if(!venueMap||!mapLoaded) return;
+  if(venueMapOverlayRefreshTimer) clearTimeout(venueMapOverlayRefreshTimer);
+  venueMapOverlayRefreshTimer=setTimeout(()=>{
+    venueMapOverlayRefreshTimer=null;
+    refreshVenueMapOverlays();
+  },delay);
 }
 
 function refreshVenueMapOverlays(){
-  if(!venueMapStyleReady()) return;
-  addVenueLayers();
-  updateUserMarker(false);
-  renderMapView();
-  requestAnimationFrame(()=>venueMap.resize());
+  if(!venueMap||!mapLoaded) return;
+  if(!venueMap.isStyleLoaded()){
+    venueMapStyleLoaded=false;
+    scheduleVenueMapOverlayRefresh(120);
+    return;
+  }
+  venueMapStyleLoaded=true;
+  try{
+    addVenueLayers();
+    updateUserMarker(false);
+    renderMapView();
+    requestAnimationFrame(()=>venueMap.resize());
+  }catch(error){
+    scheduleVenueMapOverlayRefresh(160);
+  }
 }
 
 function syncMapTheme(){
@@ -43,7 +62,8 @@ function syncMapTheme(){
   if(venueMapStyle===next) return;
   venueMapStyle=next;
   venueMapStyleLoaded=false;
-  venueMap.setStyle(next);
+  venueMap.setStyle(next,{diff:false});
+  scheduleVenueMapOverlayRefresh(120);
 }
 
 function locationQuery(loc){
@@ -479,7 +499,12 @@ function initVenueMap(){
   });
   venueMap.on("style.load",()=>{
     venueMapStyleLoaded=true;
-    refreshVenueMapOverlays();
+    scheduleVenueMapOverlayRefresh();
+  });
+  venueMap.on("idle",()=>{
+    if(!venueMap.getSource("venues")||!venueMap.getLayer("venue-dots")){
+      scheduleVenueMapOverlayRefresh();
+    }
   });
 }
 
