@@ -318,22 +318,42 @@ function syncSoonModeButtons(){
   });
 }
 
-function scrollVenueMapIntoView(){
+function mobileMapViewportOffset(){
+  const headerHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h"))||0;
+  const tabsHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tabs-h"))||0;
+  return headerHeight+tabsHeight+8;
+}
+
+function venueMapAlignedUnderHeader(){
+  const mapEl=document.getElementById("venueMap");
+  if(!mapEl) return true;
+  const rect=mapEl.getBoundingClientRect();
+  const top=mobileMapViewportOffset();
+  return Math.abs(rect.top-top)<=2;
+}
+
+function scrollVenueMapIntoView({force=false}={}){
   if(!window.matchMedia("(max-width: 640px)").matches) return;
   const mapEl=document.getElementById("venueMap");
   if(!mapEl) return;
+  if(!force&&venueMapAlignedUnderHeader()) return;
+  const rect=mapEl.getBoundingClientRect();
   const behavior=window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth";
-  mapEl.scrollIntoView({block:"start",inline:"nearest",behavior});
+  window.scrollTo({
+    top:Math.max(0,window.scrollY+rect.top-mobileMapViewportOffset()),
+    behavior,
+  });
+  requestAnimationFrame(()=>venueMap?.resize());
 }
 
 function createLiveItem(item,type){
   const ev=type==="now"?item.current:item.next;
   const openStageFromLive=()=>{
-    scrollVenueMapIntoView();
+    scrollVenueMapIntoView({force:true});
     focusStage(item.stage);
   };
   const openEventFromLive=()=>{
-    scrollVenueMapIntoView();
+    scrollVenueMapIntoView({force:true});
     openEventMapPopup(ev);
   };
   const row=document.createElement("div");
@@ -505,6 +525,12 @@ function initVenueMap(){
     if(!venueMap.getSource("venues")||!venueMap.getLayer("venue-dots")){
       scheduleVenueMapOverlayRefresh();
     }
+  });
+  venueMap.getContainer().addEventListener("pointerdown",()=>{
+    scrollVenueMapIntoView({force:true});
+  },{passive:true});
+  venueMap.getContainer().addEventListener("focusin",()=>{
+    scrollVenueMapIntoView({force:true});
   });
 }
 
@@ -722,6 +748,7 @@ function openStagePopup(stage,{updateUrl=false,replaceUrl=false}={}){
   if(!venueMap||!mapLoaded||!hasCoords(loc)) return;
   if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
   else setStageMeta(stage);
+  scrollVenueMapIntoView({force:true});
   const snapshot=scheduleSnapshots().find(item=>item.stage===stage);
   if(!venuePopup) venuePopup=new maplibregl.Popup({offset:16,maxWidth:"360px"});
   venuePopup
@@ -740,6 +767,7 @@ function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
   }
   if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
   else setStageMeta(stage);
+  scrollVenueMapIntoView({force:true});
   flyToVenuePopup(loc);
   openStagePopup(stage,{updateUrl:false});
 }
