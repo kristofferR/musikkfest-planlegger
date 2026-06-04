@@ -81,10 +81,10 @@ let activeFavoritesOnly = false;
 let programViewMode = loadProgramViewMode();
 let favoriteEventIds = loadFavorites();
 let favoriteListName = loadFavoriteListName();
-let favoriteListToken = localStorage.getItem(FAVORITE_LIST_TOKEN_KEY)||"";
-let favoriteListSlug = localStorage.getItem(FAVORITE_LIST_SLUG_KEY)||"";
-let favoriteListSyncedCode = localStorage.getItem(FAVORITE_LIST_SYNC_CODE_KEY)||"";
-let favoriteListSyncedName = localStorage.getItem(FAVORITE_LIST_SYNC_NAME_KEY)||"";
+let favoriteListToken = safeLocalStorageGetItem(FAVORITE_LIST_TOKEN_KEY);
+let favoriteListSlug = safeLocalStorageGetItem(FAVORITE_LIST_SLUG_KEY);
+let favoriteListSyncedCode = safeLocalStorageGetItem(FAVORITE_LIST_SYNC_CODE_KEY);
+let favoriteListSyncedName = safeLocalStorageGetItem(FAVORITE_LIST_SYNC_NAME_KEY);
 let favoriteListSyncTimer = null;
 let favoriteListSyncSeq = 0;
 let favoriteListSyncPromise = null;
@@ -190,6 +190,14 @@ function loadFavorites(){
     return new Set(Array.isArray(saved)?saved:[]);
   }catch{
     return new Set();
+  }
+}
+
+function safeLocalStorageGetItem(key){
+  try{
+    return localStorage.getItem(key)||"";
+  }catch{
+    return "";
   }
 }
 

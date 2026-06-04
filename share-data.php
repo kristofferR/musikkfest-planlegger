@@ -46,7 +46,12 @@ function mf_program_data(): array {
         return $program = [];
     }
 
-    $json = json_decode((string) @file_get_contents($path), true);
+    $contents = file_get_contents($path);
+    if ($contents === false) {
+        return $program = [];
+    }
+
+    $json = json_decode($contents, true);
     return $program = is_array($json) ? $json : [];
 }
 

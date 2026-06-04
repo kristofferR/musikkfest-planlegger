@@ -109,8 +109,8 @@
     <div class="drawer-handle">
       <span class="drawer-title">Filtre</span>
       <div style="display:flex;align-items:center;gap:14px">
-        <button class="drawer-clear-all" id="clearAll">Nullstill alle</button>
-        <button class="drawer-close" id="drawerClose">×</button>
+        <button class="drawer-clear-all" id="clearAll" type="button">Nullstill alle</button>
+        <button class="drawer-close" id="drawerClose" type="button">×</button>
       </div>
     </div>
     <div class="drawer-body">
@@ -130,15 +130,15 @@
         <span class="drawer-section-label">Tidsrom</span>
         <div class="time-row">
           <div class="time-group">
-            <span class="time-sublabel">Fra</span>
+            <label class="time-sublabel" for="timeFrom">Fra</label>
             <input class="time-input" type="time" id="timeFrom">
           </div>
           <span class="time-arrow">→</span>
           <div class="time-group">
-            <span class="time-sublabel">Til</span>
+            <label class="time-sublabel" for="timeTo">Til</label>
             <input class="time-input" type="time" id="timeTo">
           </div>
-          <button class="time-reset" id="timeReset" style="display:none">× nullstill tid</button>
+          <button class="time-reset" id="timeReset" type="button" style="display:none">× nullstill tid</button>
         </div>
       </div>
     </div>
@@ -153,7 +153,7 @@
         <div class="program-actions">
           <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input class="search-input" type="text" id="searchInput" placeholder="Søk…">
+            <input class="search-input" type="text" id="searchInput" placeholder="Søk…" aria-label="Søk i programmet">
           </div>
           <button class="filter-btn" id="filterBtn" type="button">
             <span class="filter-dot"></span>
@@ -172,11 +172,11 @@
   </section>
   <section class="view-panel map-view-panel" id="mapView" role="tabpanel" aria-labelledby="mapTab">
     <div class="map-filter-bar" aria-label="Kartfilter">
-      <label class="map-favorite-filter" id="mapFavoriteFilterWrap">
+      <label class="map-favorite-filter" id="mapFavoriteFilterWrap" for="mapFavoriteFilter">
         <input id="mapFavoriteFilter" type="checkbox">
         <span id="mapFavoriteFilterLabel">Kun mine favoritter</span>
       </label>
-      <label class="map-filter-group search">
+      <label class="map-filter-group search" for="mapSearchFilter">
         <span class="map-filter-label">Søk</span>
         <input class="map-filter-input" id="mapSearchFilter" type="search" placeholder="Artist eller scene">
       </label>
@@ -278,7 +278,7 @@
         <div>
           <div class="share-section-label">URL</div>
           <div class="share-url-row">
-            <input class="share-url" id="favoriteShareUrl" type="text" readonly>
+            <input class="share-url" id="favoriteShareUrl" type="text" readonly aria-label="Delingslenke">
             <button class="share-btn primary" id="copyFavoriteUrl" type="button">
               <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H6a2 2 0 0 0-2 2v10h2V5h10V3Zm3 4H10a2 2 0 0 0-2 2v12h11a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-1 14H10V9h8v12Z"/></svg>
               <span class="share-label">Kopier</span>
@@ -363,7 +363,7 @@
 </div>
 
 <div class="app-toast" id="appToast" role="status" aria-live="polite" aria-atomic="true">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m9.2 16.6-4.1-4.1 1.4-1.4 2.7 2.7 8.3-8.3L19 6.9 9.2 16.6Z"/></svg>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentcolor" d="m9.2 16.6-4.1-4.1 1.4-1.4 2.7 2.7 8.3-8.3L19 6.9 9.2 16.6Z"/></svg>
   <span id="appToastText"></span>
 </div>
 

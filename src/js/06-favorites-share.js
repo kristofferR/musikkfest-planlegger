@@ -382,14 +382,26 @@ function renderFavoritesView(){
       row.tabIndex=0;
       row.setAttribute("role","button");
       row.setAttribute("aria-label",`Vis detaljer: ${ev.artist}`);
-      row.innerHTML=`
-        <div class="favorite-share-time">${escapeHtml(ev.time)}</div>
-        <div class="favorite-share-main">
-          <div class="favorite-share-artist">${escapeHtml(ev.artist)}</div>
-          <div class="favorite-share-stage">${escapeHtml(ev.stage)}</div>
-        </div>`;
+      const time=document.createElement("div");
+      time.className="favorite-share-time";
+      time.textContent=ev.time;
+      const main=document.createElement("div");
+      main.className="favorite-share-main";
+      const artist=document.createElement("div");
+      artist.className="favorite-share-artist";
+      artist.textContent=ev.artist;
+      const stage=document.createElement("div");
+      stage.className="favorite-share-stage";
+      stage.textContent=ev.stage;
+      main.appendChild(artist);
+      main.appendChild(stage);
+      row.appendChild(time);
+      row.appendChild(main);
       row.addEventListener("click",()=>openEventDetails(ev));
-      row.addEventListener("keydown",e=>handleKeyboardOpen(e,()=>openEventDetails(ev)));
+      row.addEventListener("keydown",e=>{
+        if(e.target!==e.currentTarget) return;
+        handleKeyboardOpen(e,()=>openEventDetails(ev));
+      });
       if(source==="shared"){
         const copy=document.createElement("button");
         const alreadyMine=isFavorite(ev);

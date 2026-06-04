@@ -79,7 +79,7 @@ document.addEventListener("click",e=>{
 const genreContainer = document.getElementById("genrePills");
 Object.keys(GENRE_LABELS).filter(g=>usedGenres.includes(g)).forEach(g=>{
   const b=document.createElement("button");
-  b.className="dpill"; b.textContent=GENRE_LABELS[g]; b.dataset.g=g;
+  b.type="button"; b.className="dpill"; b.textContent=GENRE_LABELS[g]; b.dataset.g=g;
   b.onclick=()=>{
     if(!activeGenresExplicit){
       activeGenres=new Set([g]);
@@ -97,7 +97,7 @@ Object.keys(GENRE_LABELS).filter(g=>usedGenres.includes(g)).forEach(g=>{
 const stageContainer = document.getElementById("stagePills");
 allStages.forEach(s=>{
   const b=document.createElement("button");
-  b.className="dpill"; b.textContent=s; b.dataset.s=s;
+  b.type="button"; b.className="dpill"; b.textContent=s; b.dataset.s=s;
   b.onclick=()=>{
     if(!activeStagesExplicit){
       activeStages=new Set([s]);

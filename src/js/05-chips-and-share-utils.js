@@ -1,5 +1,22 @@
 // Concatenated by scripts/build.mjs. Keep files ordered by numeric prefix.
 // ── CHIPS (active filter summary bar) ──
+function createFilterChip(className,label,ariaLabel,onClick){
+  const chip=document.createElement("button");
+  chip.type="button";
+  chip.className=`chip ${className}`.trim();
+  const text=document.createElement("span");
+  text.textContent=label;
+  const close=document.createElement("span");
+  close.className="chip-x";
+  close.textContent="×";
+  close.setAttribute("aria-hidden","true");
+  chip.appendChild(text);
+  chip.appendChild(close);
+  chip.setAttribute("aria-label",ariaLabel);
+  chip.onclick=onClick;
+  return chip;
+}
+
 function renderChips(){
   const chips=document.getElementById("activeChips");
   chips.innerHTML="";
@@ -12,69 +29,50 @@ function renderChips(){
   let any=false;
 
   if(activeFavoritesOnly){
-    const c=document.createElement("div");
-    c.className="chip favorite-chip";
-    c.innerHTML=`★ ${currentFavoriteSource()==="shared"?"Mottatt liste":"Mine favoritter"} <span class="chip-x">×</span>`;
-    c.onclick=()=>{activeFavoritesOnly=false;render();};
+    const label=`★ ${currentFavoriteSource()==="shared"?"Mottatt liste":"Mine favoritter"}`;
+    const c=createFilterChip("favorite-chip",label,"Fjern favorittfilter",()=>{activeFavoritesOnly=false;render();});
     chips.appendChild(c); any=true;
   }
 
   if(activeGenresExplicit){
     if(activeGenres.size===0){
-      const c=document.createElement("div");
-      c.className="chip genre-chip";
-      c.innerHTML='Ingen sjangre <span class="chip-x">×</span>';
-      c.onclick=()=>{setAllGenres(true);render();};
+      const c=createFilterChip("genre-chip","Ingen sjangre","Nullstill sjangerfilter",()=>{setAllGenres(true);render();});
       chips.appendChild(c); any=true;
     }else{
       activeGenres.forEach(g=>{
-        const c=document.createElement("div");
-        c.className="chip genre-chip";
-        c.innerHTML=`${escapeHtml(GENRE_LABELS[g]||g)} <span class="chip-x">×</span>`;
-        c.onclick=()=>{activeGenres.delete(g);render();};
+        const label=GENRE_LABELS[g]||g;
+        const c=createFilterChip("genre-chip",label,`Fjern sjangerfilter: ${label}`,()=>{activeGenres.delete(g);render();});
         chips.appendChild(c); any=true;
       });
     }
   }
   if(activeStagesExplicit){
     if(activeStages.size===0){
-      const c=document.createElement("div");
-      c.className="chip stage-chip";
-      c.innerHTML='Ingen scener <span class="chip-x">×</span>';
-      c.onclick=()=>{setAllStages(true);render();};
+      const c=createFilterChip("stage-chip","Ingen scener","Nullstill scenefilter",()=>{setAllStages(true);render();});
       chips.appendChild(c); any=true;
     }else{
       activeStages.forEach(s=>{
-        const c=document.createElement("div");
-        c.className="chip stage-chip";
-        c.innerHTML=`${escapeHtml(s)} <span class="chip-x">×</span>`;
-        c.onclick=()=>{activeStages.delete(s);render();};
+        const c=createFilterChip("stage-chip",s,`Fjern scenefilter: ${s}`,()=>{activeStages.delete(s);render();});
         chips.appendChild(c); any=true;
       });
     }
   }
   if(timeFrom||timeTo){
-    const c=document.createElement("div");
-    c.className="chip time-chip";
     const label=(timeFrom&&timeTo)?`${timeFrom}–${timeTo}`:timeFrom?`Fra ${timeFrom}`:`Til ${timeTo}`;
-    c.innerHTML=`🕐 ${label} <span class="chip-x">×</span>`;
-    c.onclick=()=>{
+    const c=createFilterChip("time-chip",`🕐 ${label}`,"Nullstill tidsfilter",()=>{
       timeFrom="";timeTo="";
       document.getElementById("timeFrom").value="";
       document.getElementById("timeTo").value="";
       updateTimeReset();render();
-    };
+    });
     chips.appendChild(c); any=true;
   }
   if(searchQuery){
-    const c=document.createElement("div");
-    c.className="chip";
-    c.innerHTML=`Søk: ${escapeHtml(searchQuery)} <span class="chip-x">×</span>`;
-    c.onclick=()=>{
+    const c=createFilterChip("","Søk: "+searchQuery,`Fjern søk: ${searchQuery}`,()=>{
       searchQuery="";
       document.getElementById("searchInput").value="";
       render();
-    };
+    });
     chips.appendChild(c); any=true;
   }
 

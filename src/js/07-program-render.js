@@ -149,24 +149,72 @@ function renderProgramByStage(mc){
 
     const hdr=document.createElement("div");
     hdr.className="stage-card-header";
-    const mapBtn=loc?'<button class="stage-map-toggle" type="button" aria-expanded="false">Kart</button>':"";
-    hdr.innerHTML=`<span class="stage-name-label">${escapeHtml(stage)}</span><span class="stage-header-actions">${mapBtn}<span class="stage-count">${visible.length} stk <span class="chevron">▾</span></span></span>`;
-    hdr.addEventListener("click",e=>{
-      if(e.target.closest?.(".stage-map-toggle")) return;
+    hdr.tabIndex=0;
+    hdr.setAttribute("role","button");
+    hdr.setAttribute("aria-expanded","true");
+
+    const name=document.createElement("span");
+    name.className="stage-name-label";
+    name.textContent=stage;
+
+    const actions=document.createElement("span");
+    actions.className="stage-header-actions";
+
+    let mapToggle=null;
+    if(loc){
+      mapToggle=document.createElement("button");
+      mapToggle.className="stage-map-toggle";
+      mapToggle.type="button";
+      mapToggle.setAttribute("aria-expanded","false");
+      mapToggle.textContent="Kart";
+      actions.appendChild(mapToggle);
+    }
+
+    const count=document.createElement("span");
+    count.className="stage-count";
+    count.appendChild(document.createTextNode(`${visible.length} stk `));
+    const chevron=document.createElement("span");
+    chevron.className="chevron";
+    chevron.textContent="▾";
+    count.appendChild(chevron);
+    actions.appendChild(count);
+    hdr.appendChild(name);
+    hdr.appendChild(actions);
+
+    function syncStageHeaderState(){
+      const expanded=!card.classList.contains("collapsed");
+      hdr.setAttribute("aria-expanded",String(expanded));
+      if(mapToggle&&!card.classList.contains("map-open")){
+        mapToggle.textContent="Kart";
+        mapToggle.setAttribute("aria-expanded","false");
+      }
+    }
+
+    function toggleStageCollapsed(){
       const willCollapse=!card.classList.contains("collapsed");
       card.classList.toggle("collapsed");
       if(willCollapse&&card.classList.contains("map-open")){
         card.classList.remove("map-open");
-        const button=hdr.querySelector(".stage-map-toggle");
-        button.textContent="Kart";
-        button.setAttribute("aria-expanded","false");
+      }
+      syncStageHeaderState();
+    }
+
+    hdr.addEventListener("click",e=>{
+      if(e.target.closest?.(".stage-map-toggle")) return;
+      toggleStageCollapsed();
+    });
+    hdr.addEventListener("keydown",e=>{
+      if(e.target!==hdr) return;
+      if(e.key==="Enter"||e.key===" "){
+        e.preventDefault();
+        toggleStageCollapsed();
       }
     });
 
     let mapPanel=null;
     if(loc){
       mapPanel=createStageMapPanel(loc);
-      hdr.querySelector(".stage-map-toggle").addEventListener("click",e=>{
+      mapToggle.addEventListener("click",e=>{
         e.stopPropagation();
         toggleStageMap(card,mapPanel,e.currentTarget);
       });
@@ -202,7 +250,14 @@ function renderProgramByTime(mc){
     card.dataset.min=String(toMin(time));
     const header=document.createElement("div");
     header.className="time-card-header";
-    header.innerHTML=`<span class="time-label">${escapeHtml(time)}</span><span class="time-count">${events.length} stk</span>`;
+    const label=document.createElement("span");
+    label.className="time-label";
+    label.textContent=time;
+    const count=document.createElement("span");
+    count.className="time-count";
+    count.textContent=`${events.length} stk`;
+    header.appendChild(label);
+    header.appendChild(count);
     const list=document.createElement("div");
     list.className="event-list";
     events.forEach(ev=>list.appendChild(createProgramEventRow(ev,{showTime:false,showStage:true})));
@@ -228,7 +283,12 @@ function renderContent(){
   document.getElementById("resultsInfo").textContent=total
     ? programViewMode==="time"?`${total} opptredener kronologisk`:`${total} opptredener`
     : "";
-  if(!total) mc.innerHTML=`<div class="empty">${activeFavoritesOnly?"Ingen favoritter matcher filteret.":"Ingen artister matcher filteret."}</div>`;
+  if(!total){
+    const empty=document.createElement("div");
+    empty.className="empty";
+    empty.textContent=activeFavoritesOnly?"Ingen favoritter matcher filteret.":"Ingen artister matcher filteret.";
+    mc.appendChild(empty);
+  }
 
   // Legend
   const leg=document.getElementById("legend");
