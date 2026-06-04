@@ -17,6 +17,7 @@ const EVENT_NEXT_DATE = "2026-06-07";
 const EVENT_TIME_ZONE_OFFSET = "+02:00";
 const SET_DURATION_MIN = 45;
 const CARTO_VOYAGER_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+const CARTO_DARK_MATTER_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const OSLO_CENTER = [10.750721867246659,59.929923983287885];
 const FAVORITES_KEY = "musikkfest-oslo-2026-favorites";
 const FAVORITE_LIST_NAME_KEY = "musikkfest-oslo-2026-favorite-list-name";
@@ -25,6 +26,7 @@ const FAVORITE_LIST_SLUG_KEY = "musikkfest-oslo-2026-favorite-list-slug";
 const FAVORITE_LIST_SYNC_CODE_KEY = "musikkfest-oslo-2026-favorite-list-sync-code";
 const FAVORITE_LIST_SYNC_NAME_KEY = "musikkfest-oslo-2026-favorite-list-sync-name";
 const THEME_KEY = "musikkfest-oslo-2026-manual-theme";
+const TEXT_SIZE_KEY = "musikkfest-oslo-2026-text-size";
 const PROGRAM_VIEW_MODE_KEY = "musikkfest-oslo-2026-program-view-mode";
 const PUBLIC_APP_URL = "https://suboktav.no/musikkfest/";
 const PUBLIC_SHARE_URL = `${PUBLIC_APP_URL}del/`;
@@ -95,6 +97,8 @@ let soonSortMode = "smart";
 let activeView = "program";
 let venueMap = null;
 let mapLoaded = false;
+let venueMapStyle = null;
+let venueLayerEventsBound = false;
 let locationRequested = false;
 let locationState = "idle";
 let userLocation = null;
@@ -156,7 +160,31 @@ function setTheme(theme){
     localStorage.setItem(THEME_KEY,next);
     localStorage.removeItem("musikkfest-oslo-2026-theme");
   }catch{}
+  syncMapTheme();
   updateThemeToggle();
+}
+
+function textSizeLarge(){
+  return document.documentElement.dataset.textSize==="large";
+}
+
+function updateTextSizeToggle(){
+  const button=document.getElementById("textSizeToggle");
+  if(!button) return;
+  const large=textSizeLarge();
+  button.setAttribute("aria-pressed",String(large));
+  button.setAttribute("aria-label",large?"Bruk normal skriftstørrelse":"Øk skriftstørrelsen");
+  button.title=large?"Bruk normal skriftstørrelse":"Øk skriftstørrelsen";
+}
+
+function setTextSizeLarge(large){
+  if(large) document.documentElement.dataset.textSize="large";
+  else delete document.documentElement.dataset.textSize;
+  try{
+    if(large) localStorage.setItem(TEXT_SIZE_KEY,"large");
+    else localStorage.removeItem(TEXT_SIZE_KEY);
+  }catch{}
+  updateTextSizeToggle();
 }
 
 function loadProgramViewMode(){
