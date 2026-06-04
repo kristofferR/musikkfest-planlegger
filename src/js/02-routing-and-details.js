@@ -1,0 +1,303 @@
+// Concatenated by scripts/build.mjs. Keep files ordered by numeric prefix.
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,ch=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[ch]));
+}
+
+function currentAppBasePath(){
+  const path=window.location.pathname;
+  const index=path.indexOf(APP_ROUTE_PREFIX);
+  if(index!==-1) return path.slice(0,index+APP_ROUTE_PREFIX.length);
+  if(/\.html?$/i.test(path)) return path;
+  return APP_ROUTE_PREFIX;
+}
+
+function rootViewUrl(view=activeView){
+  const hash=view==="map"?"#kart":view==="favorites"?"#favoritter":"";
+  return `${window.location.origin}${currentAppBasePath()}${window.location.search}${hash}`;
+}
+
+function publicStageUrl(stage){
+  const stageSlug=stageSlugByName.get(stage)||slugifyRouteSegment(stage);
+  return `${PUBLIC_APP_URL}${stageSlug}`;
+}
+
+function publicEventUrl(ev){
+  const stageSlug=stageSlugByName.get(ev.stage)||slugifyRouteSegment(ev.stage);
+  const artistSlug=eventSlugById.get(ev.id)||slugifyRouteSegment(ev.artist);
+  return `${PUBLIC_APP_URL}${stageSlug}/${artistSlug}`;
+}
+
+function localStageUrl(stage){
+  const stageSlug=stageSlugByName.get(stage)||slugifyRouteSegment(stage);
+  return `${window.location.origin}${currentAppBasePath()}${stageSlug}`;
+}
+
+function localEventUrl(ev){
+  const stageSlug=stageSlugByName.get(ev.stage)||slugifyRouteSegment(ev.stage);
+  const artistSlug=eventSlugById.get(ev.id)||slugifyRouteSegment(ev.artist);
+  return `${window.location.origin}${currentAppBasePath()}${stageSlug}/${artistSlug}`;
+}
+
+function setUrl(url,{replace=false}={}){
+  if(!window.history?.pushState) return;
+  const next=new URL(url,window.location.href).toString();
+  if(next===window.location.href) return;
+  history[replace?"replaceState":"pushState"]({musikkfest:true},"",next);
+}
+
+function updateMeta({title=DEFAULT_PAGE_TITLE,description=DEFAULT_PAGE_DESCRIPTION,url=PUBLIC_APP_URL}={}){
+  document.title=title;
+  const canonical=document.querySelector('link[rel="canonical"]');
+  if(canonical) canonical.href=url;
+  const values=[
+    ['meta[name="description"]',"content",description],
+    ['meta[property="og:title"]',"content",title],
+    ['meta[property="og:description"]',"content",description],
+    ['meta[property="og:url"]',"content",url],
+    ['meta[name="twitter:title"]',"content",title],
+    ['meta[name="twitter:description"]',"content",description],
+  ];
+  values.forEach(([selector,attr,value])=>document.querySelector(selector)?.setAttribute(attr,value));
+}
+
+function resetMeta(){
+  updateMeta();
+}
+
+function setStageMeta(stage){
+  updateMeta({
+    title:`${stage} - Musikkfest 2026`,
+    description:`Se kart, adresse og program for ${stage} under Musikkfest 2026.`,
+    url:publicStageUrl(stage),
+  });
+}
+
+function setEventMeta(ev){
+  updateMeta({
+    title:`${ev.artist} på ${ev.stage} - Musikkfest 2026`,
+    description:`${ev.time} spiller ${ev.artist} på ${ev.stage} under Musikkfest 2026.`,
+    url:publicEventUrl(ev),
+  });
+}
+
+function routeSegmentsFromLocation(){
+  const path=window.location.pathname;
+  const index=path.indexOf(APP_ROUTE_PREFIX);
+  if(index===-1) return [];
+  const rest=path.slice(index+APP_ROUTE_PREFIX.length).replace(/^\/+|\/+$/g,"");
+  if(!rest||rest.includes(".")) return [];
+  return rest.split("/").map(part=>decodeURIComponent(part).toLowerCase());
+}
+
+function routeFromLocation(){
+  const [stageSlug,artistSlug]=routeSegmentsFromLocation();
+  if(!stageSlug) return null;
+  const stage=stageNameBySlug.get(stageSlug);
+  if(!stage) return null;
+  if(artistSlug){
+    const ev=eventByRouteSlug.get(`${stageSlug}/${artistSlug}`);
+    if(ev) return {type:"event",stage,event:ev};
+  }
+  return {type:"stage",stage};
+}
+
+function setStageRoute(stage,{replace=false}={}){
+  setUrl(localStageUrl(stage),{replace});
+  setStageMeta(stage);
+}
+
+function setEventRoute(ev,{replace=false}={}){
+  setUrl(localEventUrl(ev),{replace});
+  setEventMeta(ev);
+}
+
+function eventDetails(ev){
+  return EVENT_DETAILS[ev.objectId]||EVENT_DETAILS[ev.id]||{};
+}
+
+function eventImageUrl(ev){
+  const imageUrl=String(eventDetails(ev).imageUrl||"").trim();
+  return imageUrl===DEFAULT_ARTIST_IMAGE_URL?"":imageUrl;
+}
+
+function eventSourceUrl(ev){
+  return eventDetails(ev).sourceUrl||`https://musikkfest.no/nb/program#slot=${encodeURIComponent(ev.objectId||ev.id)}`;
+}
+
+function artistSearchName(artist){
+  return String(artist||"")
+    .replace(/\s*\((?:live|dj-?set|konsert)\)\s*/ig," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function googleArtistSearchUrl(artist){
+  const requiredName=artistSearchName(artist)||String(artist||"").trim();
+  const supportTerms="(spotify OR soundcloud OR bandcamp OR youtube OR instagram OR artist OR norge OR oslo)";
+  return `https://www.google.com/search?q=${encodeURIComponent(`"${requiredName}" ${supportTerms}`)}`;
+}
+
+function formatDescription(text){
+  const clean=String(text||"").trim();
+  if(!clean) return '<div class="event-modal-empty">Ingen artisttekst registrert hos Musikkfest ennå.</div>';
+  return clean.split(/\n{2,}/)
+    .map(part=>`<p>${escapeHtml(part).replace(/\n/g,"<br>")}</p>`)
+    .join("");
+}
+
+function syncEventModalFavorite(ev){
+  const button=document.getElementById("eventModalFavorite");
+  if(!button||!ev) return;
+  const active=isFavorite(ev);
+  button.textContent=active?"★":"☆";
+  button.classList.toggle("active",active);
+  button.setAttribute("aria-pressed",String(active));
+  button.setAttribute("aria-label",`${active?"Fjern favoritt":"Legg til favoritt"}: ${ev.artist}`);
+}
+
+function findEventById(id){
+  return data.find(item=>item.id===id||item.objectId===id||item.legacyId===id);
+}
+
+function openEventDetailsById(id){
+  const ev=findEventById(id);
+  if(!ev) return;
+  if(activeView==="map"){
+    openEventMapPopup(ev);
+    return;
+  }
+  openEventDetails(ev);
+}
+
+function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
+  activeDetailEvent=ev;
+  if(updateUrl) setEventRoute(ev,{replace:replaceUrl});
+  else setEventMeta(ev);
+  const details=eventDetails(ev);
+  const modal=document.getElementById("eventModal");
+  const media=document.getElementById("eventModalMedia");
+  const image=document.getElementById("eventModalImage");
+  const stageButton=document.getElementById("eventModalStage");
+  const googleButton=document.getElementById("eventModalGoogle");
+  const imageUrl=eventImageUrl(ev);
+  const hasStageMap=hasCoords(STAGE_LOCATIONS[ev.stage]);
+  const imageLoadSeq=++eventModalImageLoadSeq;
+  image.onload=null;
+  image.onerror=null;
+  image.removeAttribute("src");
+  image.alt="";
+  media.classList.remove("is-loading");
+  modal.classList.toggle("no-media",!imageUrl);
+  document.getElementById("eventModalMeta").textContent=`${ev.time} · ${GENRE_LABELS[ev.genre]||ev.genre}`;
+  document.getElementById("eventModalTitle").textContent=ev.artist;
+  stageButton.textContent=ev.stage;
+  stageButton.disabled=!hasStageMap;
+  stageButton.title=hasStageMap?"Vis scene på kartet":"";
+  googleButton.href=googleArtistSearchUrl(ev.artist);
+  googleButton.setAttribute("aria-label",`Søk på artist: ${ev.artist}`);
+  syncEventModalFavorite(ev);
+  document.getElementById("eventModalDescription").innerHTML=formatDescription(details.description);
+  document.getElementById("eventModalMap").style.display=hasStageMap?"inline-flex":"none";
+  if(imageUrl){
+    image.alt=ev.artist;
+    media.style.display="block";
+    media.classList.add("is-loading");
+    image.onload=()=>{
+      if(imageLoadSeq!==eventModalImageLoadSeq) return;
+      media.classList.remove("is-loading");
+    };
+    image.onerror=()=>{
+      if(imageLoadSeq!==eventModalImageLoadSeq) return;
+      media.classList.remove("is-loading");
+      image.removeAttribute("src");
+      image.alt="";
+      media.style.display="none";
+      modal.classList.add("no-media");
+    };
+    requestAnimationFrame(()=>{
+      if(imageLoadSeq===eventModalImageLoadSeq) image.src=imageUrl;
+    });
+  }else{
+    media.style.display="none";
+  }
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  document.getElementById("eventModalClose").focus();
+}
+
+function eventMapPopupHtml(ev,snapshot){
+  const details=eventDetails(ev);
+  const imageUrl=eventImageUrl(ev);
+  const distanceText=Number.isFinite(snapshot?.distance)?` · ${formatDistance(snapshot.distance)}`:"";
+  const image=imageUrl?`<img class="popup-detail-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(ev.artist)}">`:"";
+  const favoriteActive=isFavorite(ev);
+  return `
+    <div class="popup-detail">
+      ${image}
+      <div class="popup-detail-head">
+        <div class="popup-detail-main">
+          <div class="popup-detail-kicker">${escapeHtml(ev.time)} · ${escapeHtml(GENRE_LABELS[ev.genre]||ev.genre)}${escapeHtml(distanceText)}</div>
+          <div class="popup-detail-title">${escapeHtml(ev.artist)}</div>
+          <button class="popup-detail-stage" type="button" data-stage-popup-stage="${escapeHtml(ev.stage)}">${escapeHtml(ev.stage)}</button>
+        </div>
+        <button class="popup-detail-favorite ${favoriteActive?"active":""}" type="button" data-popup-favorite-event="${escapeHtml(ev.id)}" aria-pressed="${favoriteActive?"true":"false"}" aria-label="${favoriteActive?"Fjern favoritt":"Legg til favoritt"}: ${escapeHtml(ev.artist)}">${favoriteActive?"★":"☆"}</button>
+      </div>
+      <div class="popup-detail-description">${formatDescription(details.description)}</div>
+      <div class="popup-detail-actions">
+        <button class="popup-detail-action primary" type="button" data-stage-popup-stage="${escapeHtml(ev.stage)}">Scenen</button>
+        <a class="popup-detail-action" href="${escapeHtml(googleArtistSearchUrl(ev.artist))}" target="_blank" rel="noopener">Søk på artist</a>
+      </div>
+    </div>`;
+}
+
+function labelMapPopupCloseButton(){
+  requestAnimationFrame(()=>{
+    const close=document.querySelector(".maplibregl-popup-close-button");
+    if(!close) return;
+    close.setAttribute("aria-label","Lukk kart-popup");
+    close.setAttribute("title","Lukk");
+  });
+}
+
+function openEventMapPopup(ev,{updateUrl=true,replaceUrl=false}={}){
+  const loc=STAGE_LOCATIONS[ev.stage];
+  if(!venueMap||!hasCoords(loc)){
+    openEventDetails(ev,{updateUrl,replaceUrl});
+    return;
+  }
+  if(!mapLoaded){
+    venueMap.once("load",()=>openEventMapPopup(ev,{updateUrl,replaceUrl}));
+    return;
+  }
+  if(updateUrl) setEventRoute(ev,{replace:replaceUrl});
+  else setEventMeta(ev);
+  const snapshot=scheduleSnapshots().find(item=>item.stage===ev.stage);
+  if(!venuePopup) venuePopup=new maplibregl.Popup({offset:16,maxWidth:"360px"});
+  venueMap.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.8,essential:true});
+  venuePopup
+    .setLngLat([loc.lng,loc.lat])
+    .setHTML(eventMapPopupHtml(ev,snapshot))
+    .addTo(venueMap);
+  labelMapPopupCloseButton();
+}
+
+function closeEventDetails({updateUrl=true}={}){
+  const modal=document.getElementById("eventModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+  activeDetailEvent=null;
+  if(updateUrl){
+    setUrl(rootViewUrl(activeView),{replace:true});
+    resetMeta();
+  }
+}
+
+function handleKeyboardOpen(event,callback){
+  if(event.target.closest?.("button,a,input,select,textarea")) return;
+  if(event.key==="Enter"||event.key===" "){
+    event.preventDefault();
+    callback();
+  }
+}

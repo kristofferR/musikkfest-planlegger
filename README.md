@@ -4,7 +4,8 @@ Uoffisiell planlegger for Musikkfest Oslo 2026 med interaktivt program, kart, fa
 
 ## Innhold
 
-- `index.html` er hovedappen.
+- `src/` er kildekoden for hovedappen: HTML-template, CSS, JS-seksjoner og programdata.
+- `dist/` genereres av `bun run build` og er det som deployes.
 - `api/list.php` lagrer delbare favorittlister.
 - `share*.php` og `del*/index.php` håndterer deling, metadata og delingsbilder.
 - `musikkfest_2026_og_ekte_artister_1200x630.png` og `musikkfest-map-thumb.png` brukes til previews og genererte bilder.
@@ -13,11 +14,17 @@ Uoffisiell planlegger for Musikkfest Oslo 2026 med interaktivt program, kart, fa
 
 ## Lokal visning
 
-Kjor en enkel statisk server som server repoet under `/musikkfest`, samme sti som produksjon:
+Bygg appen forst:
+
+```bash
+bun run build
+```
+
+Kjor deretter en enkel statisk server som server `dist/` under `/musikkfest`, samme sti som produksjon:
 
 ```bash
 LOCAL_ROOT=$(mktemp -d)
-ln -s "$PWD" "$LOCAL_ROOT/musikkfest"
+ln -s "$PWD/dist" "$LOCAL_ROOT/musikkfest"
 uv run python -m http.server 8765 -d "$LOCAL_ROOT"
 ```
 
@@ -27,7 +34,7 @@ Apne deretter:
 http://127.0.0.1:8765/musikkfest/
 ```
 
-Repoets `index.html` er source of truth.
+Repoets `src/` er source of truth. `index.html` i rotkatalogen er bare en kort utviklerbeskjed.
 
 ## Build
 
