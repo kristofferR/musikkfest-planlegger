@@ -2,6 +2,7 @@
 :root{
   --bg:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.09);
   --surface-soft:#faf9f7;--surface-warm:#fffaf5;--surface-muted:#ece8df;--surface-raised:#fff;
+  --surface-raised-rgb:255,255,255;
   --text:#1a1814;--muted:#6b6760;--faint:#a8a49e;
   --accent:#d4522a;--accent2:#2a6dd4;
   --topbar-bg:#1a1814;--topbar-text:#f5f3ee;--topbar-muted:rgba(255,255,255,.42);
@@ -12,6 +13,7 @@
 :root[data-theme="dark"]{
   --bg:#11100d;--surface:#1d1a16;--border:rgba(255,255,255,.1);
   --surface-soft:#24211b;--surface-warm:#211c16;--surface-muted:#302b24;--surface-raised:#29251f;
+  --surface-raised-rgb:41,37,31;
   --text:#f2eee6;--muted:#b8afa1;--faint:#7f776c;
   --accent:#e5683e;--accent2:#7faaff;
   --topbar-bg:#080706;--topbar-text:#f7f0e7;--topbar-muted:rgba(247,240,231,.5);
@@ -729,7 +731,7 @@ body.map-active footer{display:none}
 .popup-detail-description-wrap::after{
   content:"";position:absolute;left:0;right:10px;bottom:0;height:30px;
   pointer-events:none;opacity:0;transition:opacity .12s;
-  background:linear-gradient(to bottom,rgba(255,255,255,0),var(--surface-raised) 82%);
+  background:linear-gradient(to bottom,rgba(var(--surface-raised-rgb),0),var(--surface-raised) 82%);
 }
 .popup-detail-description-wrap.is-scrollable::after{opacity:1}
 .popup-detail-description-wrap.is-scrollable.is-at-bottom::after{opacity:0}
@@ -1110,9 +1112,13 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
   .popup-detail-stage{font-size:11px;margin-bottom:6px;max-width:calc(100% - 10px)}
   .popup-detail-favorite{width:36px;height:36px;border-radius:9px;font-size:22px}
   .popup-detail-description{
-    max-height:92px;overflow-y:scroll;-webkit-overflow-scrolling:touch;
+    max-height:92px;overflow-y:auto;-webkit-overflow-scrolling:touch;
     font-size:11px;line-height:1.4;gap:6px;padding-right:16px;
   }
+  .popup-detail-description-wrap.is-scrollable .popup-detail-description{
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .popup-detail-description-wrap.is-scrollable .popup-detail-description::-webkit-scrollbar{display:none}
   .popup-detail-description-wrap.is-scrollable .popup-detail-scrollbar{display:block}
   .popup-detail-description-wrap::after{right:12px;height:24px}
   .popup-detail-actions{gap:5px;margin-top:8px}
