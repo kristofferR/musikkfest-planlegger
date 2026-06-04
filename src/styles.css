@@ -183,9 +183,12 @@ main{padding-top:calc(var(--header-h) + var(--tabs-h) + 8px);padding-bottom:3rem
 .view-panel.active{display:block}
 
 .program-toolbar{
+  position:sticky;top:calc(var(--header-h) + var(--tabs-h));z-index:140;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:10px 0 2px;
+  padding:10px 0 8px;background:var(--bg);
+  box-shadow:0 6px 10px -8px rgba(0,0,0,.25);
 }
+body.chips-visible .program-toolbar{top:calc(var(--header-h) + var(--tabs-h) + 44px)}
 .program-actions{
   display:flex;align-items:center;gap:7px;min-width:0;flex:1;
 }
@@ -1172,7 +1175,7 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
   .view-tabs{justify-content:stretch}
   .view-tab-group{width:100%}
   .view-tab{flex:1;min-width:0}
-  .program-toolbar{gap:8px;padding:8px 0 2px}
+  .program-toolbar{gap:8px;padding:8px 0 8px}
   .program-actions{gap:6px}
   .program-toolbar .search-wrap{min-width:0;max-width:none}
   .program-toolbar .filter-btn{padding:6px 9px}
