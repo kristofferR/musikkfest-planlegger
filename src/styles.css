@@ -28,6 +28,8 @@
   --fs-22:26.4px;--fs-23:27.6px;--fs-25:30px;--fs-28:33.6px;--fs-31:37.2px;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+html.page-scroll-locked,
+body.page-scroll-locked{overflow:hidden;overscroll-behavior:none}
 
 /* ── TOP BAR ── */
 .topbar{
@@ -806,7 +808,7 @@ body.map-active footer{display:none}
 /* ── EVENT DETAILS ── */
 .event-modal-overlay{
   display:none;position:fixed;inset:0;z-index:520;background:rgba(0,0,0,.56);
-  padding:18px;overflow:auto;
+  padding:18px;overflow:hidden;overscroll-behavior:contain;
 }
 .event-modal-overlay.open{display:flex;align-items:center;justify-content:center}
 .event-modal{

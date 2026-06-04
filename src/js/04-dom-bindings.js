@@ -35,8 +35,29 @@ infoModal.addEventListener("click",e=>{ if(e.target===infoModal) closeInfoModal(
 
 // ── EVENT DETAILS ──
 const eventModal=document.getElementById("eventModal");
+let eventModalTouchStartY=0;
 document.getElementById("eventModalClose").addEventListener("click",closeEventDetails);
 eventModal.addEventListener("click",e=>{ if(e.target===eventModal) closeEventDetails(); });
+eventModal.addEventListener("touchstart",e=>{
+  eventModalTouchStartY=e.touches?.[0]?.clientY??0;
+},{passive:true});
+eventModal.addEventListener("touchmove",e=>{
+  if(!eventModal.classList.contains("open")) return;
+  const scroller=e.target.closest?.(".event-modal-description");
+  if(!scroller){
+    e.preventDefault();
+    return;
+  }
+  if(scroller.scrollHeight<=scroller.clientHeight){
+    e.preventDefault();
+    return;
+  }
+  const y=e.touches?.[0]?.clientY??eventModalTouchStartY;
+  const movingDown=y>eventModalTouchStartY;
+  const atTop=scroller.scrollTop<=0;
+  const atBottom=scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-1;
+  if((atTop&&movingDown)||(atBottom&&!movingDown)) e.preventDefault();
+},{passive:false});
 function openActiveDetailEventOnMap(){
   if(!activeDetailEvent) return;
   const ev=activeDetailEvent;

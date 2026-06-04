@@ -5,6 +5,48 @@ function escapeHtml(value){
   }[ch]));
 }
 
+function lockPageScroll(owner){
+  if(owner?.dataset.pageScrollLocked==="true") return;
+  if(owner) owner.dataset.pageScrollLocked="true";
+  if(pageScrollLockCount===0){
+    const scrollY=window.scrollY||document.documentElement.scrollTop||0;
+    pageScrollLockState={
+      scrollY,
+      bodyPosition:document.body.style.position,
+      bodyTop:document.body.style.top,
+      bodyLeft:document.body.style.left,
+      bodyRight:document.body.style.right,
+      bodyWidth:document.body.style.width,
+    };
+    document.documentElement.classList.add("page-scroll-locked");
+    document.body.classList.add("page-scroll-locked");
+    document.body.style.position="fixed";
+    document.body.style.top=`-${scrollY}px`;
+    document.body.style.left="0";
+    document.body.style.right="0";
+    document.body.style.width="100%";
+  }
+  pageScrollLockCount+=1;
+}
+
+function unlockPageScroll(owner){
+  if(owner&&owner.dataset.pageScrollLocked!=="true") return;
+  if(owner) delete owner.dataset.pageScrollLocked;
+  pageScrollLockCount=Math.max(0,pageScrollLockCount-1);
+  if(pageScrollLockCount>0) return;
+
+  const state=pageScrollLockState;
+  document.documentElement.classList.remove("page-scroll-locked");
+  document.body.classList.remove("page-scroll-locked");
+  document.body.style.position=state?.bodyPosition||"";
+  document.body.style.top=state?.bodyTop||"";
+  document.body.style.left=state?.bodyLeft||"";
+  document.body.style.right=state?.bodyRight||"";
+  document.body.style.width=state?.bodyWidth||"";
+  window.scrollTo(0,state?.scrollY||0);
+  pageScrollLockState=null;
+}
+
 function currentAppBasePath(){
   const path=window.location.pathname;
   const index=path.indexOf(APP_ROUTE_PREFIX);
@@ -228,6 +270,7 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
   }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden","false");
+  lockPageScroll(modal);
   syncEventModalDescriptionScroll();
   document.getElementById("eventModalClose").focus();
 }
@@ -377,6 +420,7 @@ function closeEventDetails({updateUrl=true}={}){
   const modal=document.getElementById("eventModal");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden","true");
+  unlockPageScroll(modal);
   activeDetailEvent=null;
   if(updateUrl){
     setUrl(rootViewUrl(activeView),{replace:true});

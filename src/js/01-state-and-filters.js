@@ -108,6 +108,8 @@ let venuePopup = null;
 let userPulseFrame = null;
 let activeDetailEvent = null;
 let eventModalImageLoadSeq = 0;
+let pageScrollLockCount = 0;
+let pageScrollLockState = null;
 
 function eventId(time,artist,genre,stage){
   return [time,artist,genre,stage].join("||");
