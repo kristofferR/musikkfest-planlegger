@@ -183,7 +183,7 @@ function localDateKey(date=new Date()){
 }
 
 function festivalClock(date=new Date()){
-  const override=new URLSearchParams(window.location.search).get("now");
+  const override=appUrlParams().get("now");
   if(/^\d{1,2}:\d{2}$/.test(override||"")){
     const [h,m]=override.split(":").map(Number);
     if(h>=0&&h<24&&m>=0&&m<60){
@@ -726,13 +726,16 @@ function startUserPulse(){
 }
 
 function updateUserMarker(fly=true){
-  if(!mapLoaded||!userLocation) return;
-  const lngLat=[userLocation.lng,userLocation.lat];
-  if(venueMapStyleReady()){
-    addUserLocationLayers();
-    const source=venueMap.getSource("user-location");
-    if(source) source.setData(userFeatureCollection());
+  if(!venueMap||!userLocation) return;
+  if(!mapLoaded) return;
+  if(!venueMapStyleReady()){
+    scheduleVenueMapOverlayRefresh(120);
+    return;
   }
+  const lngLat=[userLocation.lng,userLocation.lat];
+  addUserLocationLayers();
+  const source=venueMap.getSource("user-location");
+  if(source) source.setData(userFeatureCollection());
 
   if(fly) venueMap.flyTo({center:lngLat,zoom:12.7,speed:.8,essential:true});
 }

@@ -105,6 +105,7 @@ let venueMapStyle = null;
 let venueMapStyleLoaded = false;
 let venueMapOverlayRefreshTimer = null;
 let venueLayerEventsBound = false;
+normalizeHashQueryParams();
 const screenshotLocation = screenshotLocationFromQuery();
 let locationRequested = Boolean(screenshotLocation);
 let locationState = screenshotLocation ? "granted" : "idle";
@@ -146,8 +147,34 @@ function uniqueRouteSlug(base,used,fallback){
   return slug;
 }
 
-function screenshotLocationFromQuery(){
+function appUrlParams(){
   const params=new URLSearchParams(window.location.search);
+  const hashQueryIndex=window.location.hash.indexOf("?");
+  if(hashQueryIndex!==-1){
+    const hashParams=new URLSearchParams(window.location.hash.slice(hashQueryIndex+1));
+    hashParams.forEach((value,key)=>{
+      if(!params.has(key)) params.set(key,value);
+    });
+  }
+  return params;
+}
+
+function normalizeHashQueryParams(){
+  const hash=window.location.hash;
+  const hashQueryIndex=hash.indexOf("?");
+  if(hashQueryIndex===-1||!window.history?.replaceState) return;
+  const hashBase=hash.slice(0,hashQueryIndex);
+  const hashParams=new URLSearchParams(hash.slice(hashQueryIndex+1));
+  const url=new URL(window.location.href);
+  hashParams.forEach((value,key)=>{
+    if(!url.searchParams.has(key)) url.searchParams.set(key,value);
+  });
+  url.hash=hashBase;
+  history.replaceState(history.state,"",url.toString());
+}
+
+function screenshotLocationFromQuery(){
+  const params=appUrlParams();
   const raw=SCREENSHOT_LOCATION_PARAMS
     .map(param=>params.get(param))
     .find(value=>String(value||"").trim());

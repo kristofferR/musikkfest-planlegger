@@ -324,8 +324,9 @@ document.querySelectorAll(".view-tab").forEach(tab=>{
 });
 document.getElementById("locateBtn").addEventListener("click",requestUserLocation);
 function viewFromHash(){
-  if(window.location.hash==="#kart") return "map";
-  if(window.location.hash==="#favoritter") return "favorites";
+  const hash=window.location.hash.split("?")[0];
+  if(hash==="#kart") return "map";
+  if(hash==="#favoritter") return "favorites";
   return "program";
 }
 
