@@ -167,7 +167,7 @@ function mf_draw_rounded_image_cover(GdImage $canvas, GdImage $source, int $x, i
 
 function mf_draw_map_inset(GdImage $image, int $x, int $y, int $w, int $h, int $fallback, int $border): void {
     mf_round_rect($image, $x, $y, $w, $h, 22, $fallback);
-    $path = __DIR__ . '/musikkfest-map-thumb.png';
+    $path = __DIR__ . '/musikkfest-2026-map-thumb.png';
     $data = is_file($path) ? @file_get_contents($path) : false;
     $map = $data !== false ? @imagecreatefromstring($data) : false;
     if ($map instanceof GdImage) {
