@@ -22,6 +22,34 @@ function mf_html_path(): string {
     return __DIR__ . '/Musikkens-dag-2026-Program.html';
 }
 
+function mf_program_data_path(): string {
+    $paths = [
+        __DIR__ . '/data/program.json',
+        __DIR__ . '/src/data/program.json',
+    ];
+    foreach ($paths as $path) {
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+    return '';
+}
+
+function mf_program_data(): array {
+    static $program = null;
+    if ($program !== null) {
+        return $program;
+    }
+
+    $path = mf_program_data_path();
+    if ($path === '') {
+        return $program = [];
+    }
+
+    $json = json_decode((string) @file_get_contents($path), true);
+    return $program = is_array($json) ? $json : [];
+}
+
 function mf_storage_dir(): string {
     $override = trim((string) (getenv('MUSIKKFEST_STORAGE_DIR') ?: ''));
     if ($override !== '') {
@@ -419,15 +447,21 @@ function mf_events(): array {
         return $events;
     }
 
-    $html = @file_get_contents(mf_html_path());
-    if ($html === false) {
-        return $events = [];
-    }
-    if (!preg_match('/const RAW = (\[[\s\S]*?\n\]);/', $html, $match)) {
-        return $events = [];
+    $program = mf_program_data();
+    $raw = is_array($program['events'] ?? null) ? $program['events'] : null;
+
+    if ($raw === null) {
+        $html = @file_get_contents(mf_html_path());
+        if ($html === false) {
+            return $events = [];
+        }
+        if (!preg_match('/const RAW = (\[[\s\S]*?\n\]);/', $html, $match)) {
+            return $events = [];
+        }
+
+        $raw = json_decode($match[1], true);
     }
 
-    $raw = json_decode($match[1], true);
     if (!is_array($raw)) {
         return $events = [];
     }
