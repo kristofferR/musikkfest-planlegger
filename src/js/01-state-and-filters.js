@@ -99,6 +99,7 @@ let venueMap = null;
 let mapLoaded = false;
 let venueMapStyle = null;
 let venueMapStyleLoaded = false;
+let venueMapOverlayRefreshTimer = null;
 let venueLayerEventsBound = false;
 let locationRequested = false;
 let locationState = "idle";
