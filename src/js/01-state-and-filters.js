@@ -80,8 +80,6 @@ let activeGenres = new Set();
 let activeStages = new Set();
 let activeGenresExplicit = false;
 let activeStagesExplicit = false;
-let timeFrom = "";
-let timeTo   = "";
 let searchQuery = "";
 let activeFavoritesOnly = false;
 let programViewMode = loadProgramViewMode();
@@ -572,7 +570,7 @@ function syncFavoriteFilterButtons(){
 }
 
 function hasActiveFilters(){
-  return Boolean(activeGenresExplicit||activeStagesExplicit||activeFavoritesOnly||timeFrom||timeTo||searchQuery);
+  return Boolean(activeGenresExplicit||activeStagesExplicit||activeFavoritesOnly||searchQuery);
 }
 
 function hasActiveMapFilters(){
@@ -690,13 +688,8 @@ function clearAllFilters(){
   activeGenresExplicit=false;
   activeStagesExplicit=false;
   activeFavoritesOnly=false;
-  timeFrom="";
-  timeTo="";
   searchQuery="";
-  document.getElementById("timeFrom").value="";
-  document.getElementById("timeTo").value="";
   document.getElementById("searchInput").value="";
-  updateTimeReset();
   syncDrawerPills();
   render();
 }

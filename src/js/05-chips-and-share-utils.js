@@ -47,16 +47,6 @@ function renderChips(){
       chips.appendChild(c); any=true;
     });
   }
-  if(timeFrom||timeTo){
-    const label=(timeFrom&&timeTo)?`${timeFrom}–${timeTo}`:timeFrom?`Fra ${timeFrom}`:`Til ${timeTo}`;
-    const c=createFilterChip("time-chip",`🕐 ${label}`,"Nullstill tidsfilter",()=>{
-      timeFrom="";timeTo="";
-      document.getElementById("timeFrom").value="";
-      document.getElementById("timeTo").value="";
-      updateTimeReset();render();
-    });
-    chips.appendChild(c); any=true;
-  }
   if(searchQuery){
     const c=createFilterChip("","Søk: "+searchQuery,`Fjern søk: ${searchQuery}`,()=>{
       searchQuery="";
