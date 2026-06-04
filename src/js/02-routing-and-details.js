@@ -181,6 +181,7 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
   const image=document.getElementById("eventModalImage");
   const stageButton=document.getElementById("eventModalStage");
   const googleButton=document.getElementById("eventModalGoogle");
+  const description=document.getElementById("eventModalDescription");
   const imageUrl=eventImageUrl(ev);
   const hasStageMap=hasCoords(STAGE_LOCATIONS[ev.stage]);
   const imageLoadSeq=++eventModalImageLoadSeq;
@@ -198,7 +199,8 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
   googleButton.href=googleArtistSearchUrl(ev.artist);
   googleButton.setAttribute("aria-label",`Søk på artist: ${ev.artist}`);
   syncEventModalFavorite(ev);
-  document.getElementById("eventModalDescription").innerHTML=formatDescription(details.description);
+  description.innerHTML=formatDescription(details.description);
+  description.scrollTop=0;
   document.getElementById("eventModalMap").style.display=hasStageMap?"inline-flex":"none";
   if(imageUrl){
     image.alt=ev.artist;
@@ -207,6 +209,7 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
     image.onload=()=>{
       if(imageLoadSeq!==eventModalImageLoadSeq) return;
       media.classList.remove("is-loading");
+      syncEventModalDescriptionScroll();
     };
     image.onerror=()=>{
       if(imageLoadSeq!==eventModalImageLoadSeq) return;
@@ -215,6 +218,7 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
       image.alt="";
       media.style.display="none";
       modal.classList.add("no-media");
+      syncEventModalDescriptionScroll();
     };
     requestAnimationFrame(()=>{
       if(imageLoadSeq===eventModalImageLoadSeq) image.src=imageUrl;
@@ -224,6 +228,7 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
   }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden","false");
+  syncEventModalDescriptionScroll();
   document.getElementById("eventModalClose").focus();
 }
 
@@ -255,64 +260,84 @@ function eventMapPopupHtml(ev,snapshot){
     </div>`;
 }
 
+const scrollSyncRegistry=new WeakMap();
+
+function syncScrollableDescription(wrap,scroller,thumb,cssPrefix){
+  if(!wrap||!scroller||!thumb) return;
+  const existingUpdate=scrollSyncRegistry.get(wrap);
+  if(existingUpdate){
+    existingUpdate();
+    return;
+  }
+
+  const update=()=>{
+    const scrollable=scroller.scrollHeight>scroller.clientHeight+1;
+    wrap.classList.toggle("is-scrollable",scrollable);
+    if(!scrollable){
+      wrap.classList.remove("is-at-bottom");
+      wrap.style.removeProperty(`--${cssPrefix}-scrollbar-thumb-h`);
+      wrap.style.removeProperty(`--${cssPrefix}-scrollbar-thumb-y`);
+      return;
+    }
+    const trackHeight=Math.max(0,scroller.clientHeight-6);
+    const thumbHeight=Math.max(18,Math.round(trackHeight*scroller.clientHeight/scroller.scrollHeight));
+    const maxY=Math.max(0,trackHeight-thumbHeight);
+    const scrollMax=Math.max(1,scroller.scrollHeight-scroller.clientHeight);
+    const thumbY=Math.round(scroller.scrollTop/scrollMax*maxY);
+    wrap.style.setProperty(`--${cssPrefix}-scrollbar-thumb-h`,`${thumbHeight}px`);
+    wrap.style.setProperty(`--${cssPrefix}-scrollbar-thumb-y`,`${thumbY}px`);
+    wrap.classList.toggle("is-at-bottom",scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-2);
+  };
+
+  scrollSyncRegistry.set(wrap,update);
+  const controller=new AbortController();
+  let resizeObserver=null;
+  let contentObserver=null;
+  let lifecycleObserver=null;
+  const cleanup=()=>{
+    if(document.contains(wrap)) return;
+    controller.abort();
+    resizeObserver?.disconnect();
+    contentObserver?.disconnect();
+    lifecycleObserver?.disconnect();
+    scrollSyncRegistry.delete(wrap);
+  };
+
+  scroller.addEventListener("scroll",update,{passive:true,signal:controller.signal});
+  window.addEventListener("resize",update,{passive:true,signal:controller.signal});
+  window.addEventListener("orientationchange",update,{passive:true,signal:controller.signal});
+
+  if(typeof ResizeObserver!=="undefined"){
+    resizeObserver=new ResizeObserver(update);
+    resizeObserver.observe(wrap);
+    resizeObserver.observe(scroller);
+  }
+  if(typeof MutationObserver!=="undefined"){
+    contentObserver=new MutationObserver(update);
+    contentObserver.observe(scroller,{childList:true,subtree:true,characterData:true});
+    lifecycleObserver=new MutationObserver(cleanup);
+    lifecycleObserver.observe(document.body,{childList:true,subtree:true});
+  }
+
+  update();
+}
+
 function syncPopupDescriptionScroll(){
   requestAnimationFrame(()=>{
     document.querySelectorAll(".popup-detail-description-wrap").forEach(wrap=>{
       const scroller=wrap.querySelector(".popup-detail-description");
       const thumb=wrap.querySelector(".popup-detail-scrollbar-thumb");
-      if(!scroller||!thumb) return;
-      if(wrap.dataset.scrollSynced==="true") return;
-      wrap.dataset.scrollSynced="true";
-
-      const update=()=>{
-        const scrollable=scroller.scrollHeight>scroller.clientHeight+1;
-        wrap.classList.toggle("is-scrollable",scrollable);
-        if(!scrollable){
-          wrap.classList.remove("is-at-bottom");
-          wrap.style.removeProperty("--popup-scrollbar-thumb-h");
-          wrap.style.removeProperty("--popup-scrollbar-thumb-y");
-          return;
-        }
-        const trackHeight=Math.max(0,scroller.clientHeight-6);
-        const thumbHeight=Math.max(18,Math.round(trackHeight*scroller.clientHeight/scroller.scrollHeight));
-        const maxY=Math.max(0,trackHeight-thumbHeight);
-        const scrollMax=Math.max(1,scroller.scrollHeight-scroller.clientHeight);
-        const thumbY=Math.round(scroller.scrollTop/scrollMax*maxY);
-        wrap.style.setProperty("--popup-scrollbar-thumb-h",`${thumbHeight}px`);
-        wrap.style.setProperty("--popup-scrollbar-thumb-y",`${thumbY}px`);
-        wrap.classList.toggle("is-at-bottom",scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-2);
-      };
-
-      const controller=new AbortController();
-      let resizeObserver=null;
-      let contentObserver=null;
-      let lifecycleObserver=null;
-      const cleanup=()=>{
-        if(document.contains(wrap)) return;
-        controller.abort();
-        resizeObserver?.disconnect();
-        contentObserver?.disconnect();
-        lifecycleObserver?.disconnect();
-      };
-
-      scroller.addEventListener("scroll",update,{passive:true,signal:controller.signal});
-      window.addEventListener("resize",update,{passive:true,signal:controller.signal});
-      window.addEventListener("orientationchange",update,{passive:true,signal:controller.signal});
-
-      if(typeof ResizeObserver!=="undefined"){
-        resizeObserver=new ResizeObserver(update);
-        resizeObserver.observe(wrap);
-        resizeObserver.observe(scroller);
-      }
-      if(typeof MutationObserver!=="undefined"){
-        contentObserver=new MutationObserver(update);
-        contentObserver.observe(scroller,{childList:true,subtree:true,characterData:true});
-        lifecycleObserver=new MutationObserver(cleanup);
-        lifecycleObserver.observe(document.body,{childList:true,subtree:true});
-      }
-
-      update();
+      syncScrollableDescription(wrap,scroller,thumb,"popup");
     });
+  });
+}
+
+function syncEventModalDescriptionScroll(){
+  requestAnimationFrame(()=>{
+    const wrap=document.getElementById("eventModalDescriptionWrap");
+    const scroller=document.getElementById("eventModalDescription");
+    const thumb=wrap?.querySelector(".event-modal-scrollbar-thumb");
+    syncScrollableDescription(wrap,scroller,thumb,"event-modal");
   });
 }
 

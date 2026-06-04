@@ -1,6 +1,6 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.09);
+  --bg:#f5f3ee;--surface:#fff;--surface-rgb:255,255,255;--border:rgba(0,0,0,0.09);
   --surface-soft:#faf9f7;--surface-warm:#fffaf5;--surface-muted:#ece8df;--surface-raised:#fff;
   --surface-raised-rgb:255,255,255;
   --text:#1a1814;--muted:#6b6760;--faint:#a8a49e;
@@ -14,7 +14,7 @@
   --fs-22:22px;--fs-23:23px;--fs-25:25px;--fs-28:28px;--fs-31:31px;
 }
 :root[data-theme="dark"]{
-  --bg:#11100d;--surface:#1d1a16;--border:rgba(255,255,255,.1);
+  --bg:#11100d;--surface:#1d1a16;--surface-rgb:29,26,22;--border:rgba(255,255,255,.1);
   --surface-soft:#24211b;--surface-warm:#211c16;--surface-muted:#302b24;--surface-raised:#29251f;
   --surface-raised-rgb:41,37,31;
   --text:#f2eee6;--muted:#b8afa1;--faint:#7f776c;
@@ -810,7 +810,8 @@ body.map-active footer{display:none}
 }
 .event-modal-overlay.open{display:flex;align-items:center;justify-content:center}
 .event-modal{
-  width:min(720px,100%);max-height:calc(100vh - 36px);overflow:auto;
+  width:min(720px,100%);max-height:calc(100vh - 36px);max-height:calc(100dvh - 36px);
+  overflow:hidden;display:flex;flex-direction:column;
   background:var(--surface);border:1px solid rgba(255,255,255,.35);
   border-radius:12px;box-shadow:0 28px 80px rgba(0,0,0,.38);position:relative;
 }
@@ -822,7 +823,7 @@ body.map-active footer{display:none}
 .event-modal-close:hover{background:#fff}
 .event-modal-media{
   position:relative;background:#ece8df;border-bottom:1px solid var(--border);
-  overflow:hidden;
+  overflow:hidden;flex:0 0 auto;
 }
 .event-modal-media.is-loading{min-height:220px}
 .event-modal-media.is-loading::before{
@@ -843,9 +844,12 @@ body.map-active footer{display:none}
   from{background-position:180% 0}
   to{background-position:-80% 0}
 }
-.event-modal-body{padding:18px 20px 20px}
+.event-modal-body{
+  padding:18px 20px 20px;display:flex;flex:1 1 auto;flex-direction:column;
+  min-height:0;overflow:hidden;
+}
 .event-modal-head{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;flex:0 0 auto;
 }
 .event-modal-overlay.no-media .event-modal-head{
   padding-right:64px;
@@ -880,12 +884,37 @@ body.map-active footer{display:none}
   background:#fff7d7;border-color:#dfbd4c;color:#7c5b00;transform:translateY(-1px);
 }
 .event-modal-favorite.active{background:#f3b924;border-color:#d79d05;color:#1a1814}
+.event-modal-description-wrap{
+  position:relative;display:flex;flex:1 1 auto;min-height:0;overflow:hidden;
+}
 .event-modal-description{
+  min-height:0;flex:1 1 auto;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
   font-size:var(--fs-14);line-height:1.55;color:var(--text);display:flex;flex-direction:column;gap:10px;
+  padding-right:10px;scrollbar-width:thin;scrollbar-color:#8f887c #eeeae2;
+}
+.event-modal-description::-webkit-scrollbar{width:8px}
+.event-modal-description::-webkit-scrollbar-track{background:#eeeae2;border-radius:999px}
+.event-modal-description::-webkit-scrollbar-thumb{background:#8f887c;border:2px solid #eeeae2;border-radius:999px}
+.event-modal-description::-webkit-scrollbar-thumb:hover{background:#6f685f}
+.event-modal-description-wrap::after{
+  content:"";position:absolute;left:0;right:10px;bottom:0;height:34px;
+  pointer-events:none;opacity:0;transition:opacity .12s;
+  background:linear-gradient(to bottom,rgba(var(--surface-rgb),0),var(--surface) 82%);
+}
+.event-modal-description-wrap.is-scrollable::after{opacity:1}
+.event-modal-description-wrap.is-scrollable.is-at-bottom::after{opacity:0}
+.event-modal-scrollbar{
+  display:none;position:absolute;top:3px;right:2px;bottom:3px;width:4px;
+  border-radius:999px;background:rgba(143,136,124,.24);pointer-events:none;
+}
+.event-modal-scrollbar-thumb{
+  position:absolute;top:0;right:0;width:100%;height:var(--event-modal-scrollbar-thumb-h,24px);
+  border-radius:999px;background:#8f887c;
+  transform:translateY(var(--event-modal-scrollbar-thumb-y,0));
 }
 .event-modal-description a{color:var(--accent2)}
 .event-modal-empty{color:var(--muted)}
-.event-modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.event-modal-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;gap:8px;margin-top:16px}
 .event-modal-action{
   min-height:34px;display:inline-flex;align-items:center;justify-content:center;
   border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);
@@ -1057,6 +1086,13 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
 :root[data-theme="dark"] .popup-detail-description::-webkit-scrollbar-thumb{background:#9c9285;border-color:#24211b}
 :root[data-theme="dark"] .popup-detail-scrollbar{background:rgba(156,146,133,.28)}
 :root[data-theme="dark"] .popup-detail-scrollbar-thumb{background:#9c9285}
+:root[data-theme="dark"] .event-modal-description{
+  scrollbar-color:#9c9285 #24211b;
+}
+:root[data-theme="dark"] .event-modal-description::-webkit-scrollbar-track{background:#24211b}
+:root[data-theme="dark"] .event-modal-description::-webkit-scrollbar-thumb{background:#9c9285;border-color:#24211b}
+:root[data-theme="dark"] .event-modal-scrollbar{background:rgba(156,146,133,.28)}
+:root[data-theme="dark"] .event-modal-scrollbar-thumb{background:#9c9285}
 :root[data-theme="dark"] .event-modal-media,
 :root[data-theme="dark"] .popup-detail-image{
   background:var(--surface-muted);
@@ -1139,6 +1175,17 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
   .event-modal-media img{max-height:190px}
   .event-modal-title{font-size:var(--fs-23)}
   .event-modal-body{padding:16px}
+  .event-modal-description{
+    -webkit-overflow-scrolling:touch;padding-right:16px;
+  }
+  .event-modal-description-wrap.is-scrollable .event-modal-description{
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .event-modal-description-wrap.is-scrollable .event-modal-description::-webkit-scrollbar{display:none}
+  .event-modal-description-wrap.is-scrollable .event-modal-scrollbar{display:block}
+  .event-modal-description-wrap::after{right:12px;height:28px}
+  .event-modal-actions{margin-top:14px}
+  .event-modal-action{flex:1 1 0;min-width:0}
   .maplibregl-popup-content{padding:8px}
   .maplibregl-popup-close-button{
     top:14px;right:20px;z-index:1;width:28px;height:28px;border-radius:8px;

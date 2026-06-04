@@ -8,7 +8,11 @@ const infoModalClose = document.getElementById("infoModalClose");
 const themeToggle = document.getElementById("themeToggle");
 const textSizeToggle = document.getElementById("textSizeToggle");
 themeToggle.addEventListener("click",()=>setTheme(currentTheme()==="dark"?"light":"dark"));
-textSizeToggle.addEventListener("click",()=>setTextSizeLarge(!textSizeLarge()));
+textSizeToggle.addEventListener("click",()=>{
+  setTextSizeLarge(!textSizeLarge());
+  syncPopupDescriptionScroll();
+  syncEventModalDescriptionScroll();
+});
 updateThemeToggle();
 updateTextSizeToggle();
 filterBtn.addEventListener("click",()=>overlay.classList.add("open"));
