@@ -3,6 +3,13 @@ declare(strict_types=1);
 
 require __DIR__ . '/share-data.php';
 
+$scriptNonce = bin2hex(random_bytes(16));
+header('Cache-Control: no-cache, max-age=0, must-revalidate');
+header('X-Content-Type-Options: nosniff');
+header('X-Robots-Tag: noindex, follow');
+header('Referrer-Policy: same-origin');
+header("Content-Security-Policy: default-src 'none'; script-src 'nonce-" . $scriptNonce . "'; img-src https:; base-uri 'none'; frame-ancestors 'self'; form-action 'none'");
+
 $context = mf_share_context();
 $shareCode = $context['code'];
 $events = $context['events'];
@@ -55,7 +62,7 @@ function e(string $value): string {
 <meta name="twitter:image" content="<?= e($imageUrl) ?>">
 <meta name="twitter:image:alt" content="<?= e($title) ?>">
 <meta http-equiv="refresh" content="0; url=<?= e($appUrl) ?>">
-<script>location.replace(<?= json_encode($appUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>);</script>
+<script nonce="<?= e($scriptNonce) ?>">location.replace(<?= json_encode($appUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>);</script>
 </head>
 <body>
 <p><a href="<?= e($appUrl) ?>">Åpne favorittlisten</a></p>

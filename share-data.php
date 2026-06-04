@@ -6,6 +6,10 @@ const MF_LIST_PARAM = 'liste';
 const MF_LIST_NAME_PARAM = 'navn';
 const MF_DEFAULT_LIST_NAME = 'Favoritter';
 const MF_PUBLIC_BASE = 'https://suboktav.no/musikkfest';
+const MF_MAX_LIST_NAME_LENGTH = 60;
+const MF_MAX_SHARE_CODE_LENGTH = 1800;
+const MF_MAX_SHARE_CODE_PART_LENGTH = 4;
+const MF_MAX_FAVORITES_PER_LIST = 150;
 const MF_MAX_STORED_LISTS = 5000;
 const MF_SAVE_RATE_WINDOW_SECONDS = 600;
 const MF_MAX_SAVE_REQUESTS_PER_WINDOW = 40;
@@ -60,7 +64,13 @@ function mf_clean_list_name(?string $raw): string {
     if ($name === '') {
         return MF_DEFAULT_LIST_NAME;
     }
-    return mb_substr($name, 0, 60, 'UTF-8');
+    return mb_substr($name, 0, MF_MAX_LIST_NAME_LENGTH, 'UTF-8');
+}
+
+function mf_list_name_too_long(?string $raw): bool {
+    $name = trim((string) $raw);
+    $name = preg_replace('/\s+/u', ' ', $name) ?? '';
+    return mb_strlen($name, 'UTF-8') > MF_MAX_LIST_NAME_LENGTH;
 }
 
 function mf_slugify(string $name): string {
@@ -135,10 +145,9 @@ function mf_read_lists_unlocked(): array {
 function mf_write_lists_unlocked(array $store): void {
     $payload = json_encode($store, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     if ($payload === false) {
-        return;
+        throw new RuntimeException('Kunne ikke serialisere listelagring.');
     }
-    @file_put_contents(mf_lists_path(), $payload . "\n", LOCK_EX);
-    @chmod(mf_lists_path(), 0600);
+    mf_write_file_atomically(mf_lists_path(), $payload . "\n");
 }
 
 function mf_read_json_file(string $path): array {
@@ -149,13 +158,30 @@ function mf_read_json_file(string $path): array {
     return is_array($json) ? $json : [];
 }
 
+function mf_write_file_atomically(string $path, string $payload): void {
+    $dir = dirname($path);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0700, true);
+    }
+    $tmp = $path . '.tmp.' . bin2hex(random_bytes(6));
+    if (@file_put_contents($tmp, $payload, LOCK_EX) === false) {
+        @unlink($tmp);
+        throw new RuntimeException('Kunne ikke skrive lagringsfil.');
+    }
+    @chmod($tmp, 0600);
+    if (!@rename($tmp, $path)) {
+        @unlink($tmp);
+        throw new RuntimeException('Kunne ikke oppdatere lagringsfil.');
+    }
+    @chmod($path, 0600);
+}
+
 function mf_write_json_file(string $path, array $payload): void {
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         return;
     }
-    @file_put_contents($path, $json . "\n", LOCK_EX);
-    @chmod($path, 0600);
+    mf_write_file_atomically($path, $json . "\n");
 }
 
 function mf_rate_limit_key(?string $remoteAddress): string {
@@ -169,7 +195,10 @@ function mf_save_rate_allowed(string $key, int $now): bool {
         return true;
     }
 
-    flock($lock, LOCK_EX);
+    if (!flock($lock, LOCK_EX)) {
+        fclose($lock);
+        return true;
+    }
     try {
         $windowStart = $now - MF_SAVE_RATE_WINDOW_SECONDS;
         $limits = mf_read_json_file(mf_rate_limit_path());
@@ -192,6 +221,8 @@ function mf_save_rate_allowed(string $key, int $now): bool {
         $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
         $limits[$key] = $entry;
         mf_write_json_file(mf_rate_limit_path(), $limits);
+        return true;
+    } catch (Throwable) {
         return true;
     } finally {
         flock($lock, LOCK_UN);
@@ -271,18 +302,64 @@ function mf_normalize_token(?string $raw): string {
     return preg_match('/^[a-f0-9]{32}$/', $token) ? $token : bin2hex(random_bytes(16));
 }
 
+function mf_share_code_indexes(?string $raw, int $limit = MF_MAX_FAVORITES_PER_LIST): array {
+    $code = mf_clean_share_code($raw);
+    if ($code === '') {
+        return [];
+    }
+
+    $events = mf_events();
+    if (!$events) {
+        return [];
+    }
+
+    $seen = [];
+    $indexes = [];
+    foreach (explode('.', $code) as $part) {
+        if ($part === '' || strlen($part) > MF_MAX_SHARE_CODE_PART_LENGTH || !preg_match('/^[0-9a-z]+$/', $part)) {
+            continue;
+        }
+        $index = intval($part, 36);
+        if (!isset($events[$index])) {
+            continue;
+        }
+        $eventId = (string) ($events[$index]['id'] ?? '');
+        if ($eventId === '' || isset($seen[$eventId])) {
+            continue;
+        }
+        $seen[$eventId] = true;
+        $indexes[] = $index;
+        if (count($indexes) >= $limit) {
+            break;
+        }
+    }
+    return $indexes;
+}
+
+function mf_share_code_favorite_count(?string $raw): int {
+    return count(mf_share_code_indexes($raw, MF_MAX_FAVORITES_PER_LIST + 1));
+}
+
+function mf_canonical_share_code(?string $raw): string {
+    $indexes = mf_share_code_indexes($raw);
+    return implode('.', array_map(static fn (int $index): string => base_convert((string) $index, 10, 36), $indexes));
+}
+
 function mf_save_named_list(?string $tokenRaw, string $nameRaw, string $shareCode): array {
     $name = mf_clean_list_name($nameRaw);
     $base = mf_slugify($name);
     $token = mf_normalize_token($tokenRaw);
-    $code = mf_clean_share_code($shareCode);
+    $code = mf_canonical_share_code($shareCode);
     $lock = @fopen(mf_list_lock_path(), 'c');
     if (!$lock) {
         throw new RuntimeException('Kunne ikke låse listelagring.');
     }
     @chmod(mf_list_lock_path(), 0600);
 
-    flock($lock, LOCK_EX);
+    if (!flock($lock, LOCK_EX)) {
+        fclose($lock);
+        throw new RuntimeException('Kunne ikke låse listelagring.');
+    }
     try {
         $store = mf_read_lists_unlocked();
         $currentSlug = (string) ($store['tokens'][$token] ?? '');
@@ -379,7 +456,7 @@ function mf_events(): array {
 function mf_clean_share_code(?string $raw): string {
     $raw = strtolower((string) $raw);
     $raw = preg_replace('/[^0-9a-z.]/', '', $raw) ?? '';
-    return substr($raw, 0, 1800);
+    return substr($raw, 0, MF_MAX_SHARE_CODE_LENGTH);
 }
 
 function mf_minutes(string $time): int {
@@ -395,21 +472,9 @@ function mf_favorite_events(string $shareCode): array {
         return [];
     }
 
-    $seen = [];
     $favorites = [];
-    foreach (explode('.', $shareCode) as $part) {
-        if ($part === '' || !preg_match('/^[0-9a-z]+$/', $part)) {
-            continue;
-        }
-        $index = intval($part, 36);
-        if (!isset($events[$index])) {
-            continue;
-        }
+    foreach (mf_share_code_indexes($shareCode) as $index) {
         $event = $events[$index];
-        if (isset($seen[$event['id']])) {
-            continue;
-        }
-        $seen[$event['id']] = true;
         $favorites[] = $event;
     }
 

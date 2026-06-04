@@ -251,8 +251,10 @@ if (count($events) > count($visible)) {
 mf_draw_text($image, mf_fit_text(mf_display_url($shareUrl), 23, $bold, 888), 86, 1260, 23, $ink, $bold);
 
 header('Content-Type: image/png');
-header('Cache-Control: public, max-age=86400');
+header('Cache-Control: public, max-age=300, stale-while-revalidate=86400');
+header('X-Content-Type-Options: nosniff');
 header('X-Robots-Tag: noindex');
+header("Content-Security-Policy: default-src 'none'; img-src 'self' data:");
 $output = imagecreatetruecolor($width, $height);
 imagecopyresampled($output, $image, 0, 0, 0, 0, $width, $height, imagesx($image), imagesy($image));
 imagepng($output, null, 9);
