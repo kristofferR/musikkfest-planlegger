@@ -40,6 +40,10 @@ const DEFAULT_PAGE_TITLE = "Musikkfest 2026 - interaktivt program og kart";
 const DEFAULT_PAGE_DESCRIPTION = "Interaktivt program og kart for Musikkfest Oslo 2026. Finn scener, favoritter og musikken som spiller nå eller snart.";
 const SHARE_MAP_IMAGE_SRC = "/musikkfest/musikkfest-map-thumb.png";
 const SHARE_TITLE_FONT = "'Inter', 'SF Pro Display', 'Geist', -apple-system, BlinkMacSystemFont, sans-serif";
+const SCREENSHOT_LOCATION_PRESETS = {
+  "schous-plass": {lat:59.92031,lng:10.75954,accuracy:20},
+};
+const SCREENSHOT_LOCATION_PARAMS = ["location","loc"];
 const stageEvents = new Map(allStages.map(stage=>[
   stage,
   data.filter(d=>d.stage===stage)
@@ -101,9 +105,10 @@ let venueMapStyle = null;
 let venueMapStyleLoaded = false;
 let venueMapOverlayRefreshTimer = null;
 let venueLayerEventsBound = false;
-let locationRequested = false;
-let locationState = "idle";
-let userLocation = null;
+const screenshotLocation = screenshotLocationFromQuery();
+let locationRequested = Boolean(screenshotLocation);
+let locationState = screenshotLocation ? "granted" : "idle";
+let userLocation = screenshotLocation;
 let venuePopup = null;
 let userPulseFrame = null;
 let activeDetailEvent = null;
@@ -139,6 +144,26 @@ function uniqueRouteSlug(base,used,fallback){
   }
   used.set(slug,fallback);
   return slug;
+}
+
+function screenshotLocationFromQuery(){
+  const params=new URLSearchParams(window.location.search);
+  const raw=SCREENSHOT_LOCATION_PARAMS
+    .map(param=>params.get(param))
+    .find(value=>String(value||"").trim());
+  if(!raw) return null;
+
+  const normalized=slugifyRouteSegment(raw);
+  const preset=SCREENSHOT_LOCATION_PRESETS[normalized];
+  if(preset) return {...preset};
+
+  const coordinateMatch=String(raw).match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(!coordinateMatch) return null;
+  const lat=Number(coordinateMatch[1]);
+  const lng=Number(coordinateMatch[2]);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)) return null;
+  if(lat<-90||lat>90||lng<-180||lng>180) return null;
+  return {lat,lng,accuracy:20};
 }
 
 function currentTheme(){
