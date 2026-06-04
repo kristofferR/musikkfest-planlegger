@@ -4,6 +4,11 @@ declare(strict_types=1);
 require __DIR__ . '/../share-data.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, max-age=0');
+header('X-Content-Type-Options: nosniff');
+header('X-Robots-Tag: noindex');
+header('Referrer-Policy: same-origin');
+header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
 
 const MF_MAX_LIST_REQUEST_BYTES = 8192;
 
@@ -22,6 +27,7 @@ if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > MF_MAX_LIST_REQUEST_BYTES) {
 }
 
 if (!mf_save_rate_allowed(mf_rate_limit_key($_SERVER['REMOTE_ADDR'] ?? null), time())) {
+    header('Retry-After: ' . MF_SAVE_RATE_WINDOW_SECONDS);
     respond(['ok' => false, 'error' => 'rate_limited'], 429);
 }
 
@@ -35,15 +41,25 @@ if (!is_array($input)) {
     respond(['ok' => false, 'error' => 'invalid_json'], 400);
 }
 
-$code = mf_clean_share_code($input['f'] ?? '');
-if ($code === '') {
+$name = (string) ($input['name'] ?? MF_DEFAULT_LIST_NAME);
+if (mf_list_name_too_long($name)) {
+    respond(['ok' => false, 'error' => 'name_too_long'], 400);
+}
+
+$favoriteCount = mf_share_code_favorite_count($input['f'] ?? '');
+if ($favoriteCount === 0) {
     respond(['ok' => false, 'error' => 'empty_list'], 400);
 }
+if ($favoriteCount > MF_MAX_FAVORITES_PER_LIST) {
+    respond(['ok' => false, 'error' => 'too_many_favorites'], 400);
+}
+
+$code = mf_canonical_share_code($input['f'] ?? '');
 
 try {
     $record = mf_save_named_list(
         isset($input['token']) ? (string) $input['token'] : null,
-        (string) ($input['name'] ?? MF_DEFAULT_LIST_NAME),
+        $name,
         $code
     );
     respond([

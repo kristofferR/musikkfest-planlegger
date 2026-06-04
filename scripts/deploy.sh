@@ -53,6 +53,9 @@ if [ -d "$old_storage" ] && [ "$old_storage" != "$storage" ]; then
 fi
 
 chmod 700 "$storage"
+owner=$(stat -c '%U:%G' "$site_root")
+chown "$owner" "$storage"
+find "$storage" -maxdepth 1 -type f -exec chown "$owner" {} \;
 find "$storage" -maxdepth 1 -type f -exec chmod 600 {} \;
 REMOTE_STORAGE_SH
 
