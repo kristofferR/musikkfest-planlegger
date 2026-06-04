@@ -7,6 +7,10 @@
 <meta name="description" content="Interaktivt program og kart for Musikkfest Oslo 2026. Finn scener, favoritter og musikken som spiller nå eller snart.">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#1a1814">
+<link rel="shortcut icon" type="image/png" href="/musikkfest/assets/icons/suboktav-favicon.png">
+<link rel="icon" type="image/png" sizes="250x250" href="/musikkfest/assets/icons/suboktav-favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/musikkfest/assets/icons/suboktav-apple-touch-icon.png">
+<link rel="manifest" href="/musikkfest/manifest.webmanifest">
 <script>
 (() => {
   const themeKey = "musikkfest-oslo-2026-manual-theme";
@@ -194,7 +198,10 @@
               <button class="map-check-action" id="mapGenreAll" type="button">Aktiver alle</button>
               <button class="map-check-action" id="mapGenreNone" type="button">Deaktiver alle</button>
             </div>
-            <div class="map-check-list" id="mapGenreChecks"></div>
+            <div class="map-check-list-wrap">
+              <div class="map-check-list" id="mapGenreChecks"></div>
+              <span class="map-check-scrollbar" aria-hidden="true"><span class="map-check-scrollbar-thumb"></span></span>
+            </div>
           </div>
         </details>
       </div>
@@ -207,7 +214,10 @@
               <button class="map-check-action" id="mapStageAll" type="button">Aktiver alle</button>
               <button class="map-check-action" id="mapStageNone" type="button">Deaktiver alle</button>
             </div>
-            <div class="map-check-list" id="mapStageChecks"></div>
+            <div class="map-check-list-wrap">
+              <div class="map-check-list" id="mapStageChecks"></div>
+              <span class="map-check-scrollbar" aria-hidden="true"><span class="map-check-scrollbar-thumb"></span></span>
+            </div>
           </div>
         </details>
       </div>

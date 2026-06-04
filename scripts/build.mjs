@@ -20,6 +20,7 @@ const copyEntries = [
   "share-image",
   "musikkfest-map-thumb.png",
   "musikkfest_2026_og_ekte_artister_1200x630.png",
+  "manifest.webmanifest",
   "share-data.php",
   "share-image.php",
   "share.php",
@@ -35,7 +36,7 @@ const scriptEntries = [
   "07-program-render.js",
 ];
 
-const gzipExtensions = new Set([".css", ".html", ".js", ".json", ".svg"]);
+const gzipExtensions = new Set([".css", ".html", ".js", ".json", ".svg", ".webmanifest"]);
 const assetVersionPattern = /\b(href|src)="(\/musikkfest\/assets\/([^"?#]+))"/g;
 
 function extensionOf(path) {

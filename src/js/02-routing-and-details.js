@@ -282,7 +282,7 @@ function eventMapPopupHtml(ev,snapshot){
   const image=imageUrl?`<img class="popup-detail-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(ev.artist)}">`:"";
   const favoriteActive=isFavorite(ev);
   return `
-    <div class="popup-detail">
+    <div class="popup-detail ${imageUrl?"has-image":"no-image"}">
       ${image}
       <div class="popup-detail-head">
         <div class="popup-detail-main">
