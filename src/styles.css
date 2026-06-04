@@ -741,6 +741,8 @@ body.map-active footer{display:none}
 .popup-detail-head{
   display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;
 }
+/* Uten bilde sitter favoritt-knappen øverst der lukkeknappen ligger, så skyv den til venstre for å unngå overlapp. Med bilde ligger hodet under bildet og trenger ingen forskyvning. */
+.popup-detail.no-image .popup-detail-head{padding-right:34px}
 .popup-detail-main{min-width:0}
 .popup-detail-kicker{
   font-family:var(--mono);font-size:var(--fs-10);letter-spacing:.06em;text-transform:uppercase;
