@@ -442,17 +442,15 @@ function updateLocationStatus(){
   const status=document.getElementById("locationStatus");
   const button=document.getElementById("locateBtn");
   button.disabled=locationState==="loading";
+  status.hidden=false;
 
   if(locationState==="loading"){
     button.textContent="Henter posisjon";
     status.textContent="Ber nettleseren om lokasjonstillatelse.";
   }else if(locationState==="granted"){
     button.textContent="Oppdater posisjon";
-    status.textContent=soonSortMode==="smart"
-      ? "Smart bruker både starttid og gangavstand."
-      : soonSortMode==="distance"
-        ? "Spiller snart sorteres etter avstand fra din posisjon."
-        : "Spiller snart sorteres etter starttid.";
+    status.textContent="";
+    status.hidden=true;
   }else if(locationState==="denied"){
     button.textContent="Prøv igjen";
     status.textContent="Lokasjon ble ikke tillatt. Listene sorteres etter tid.";
