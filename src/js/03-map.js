@@ -3,6 +3,48 @@ function hasCoords(loc){
   return Boolean(loc)&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng);
 }
 
+const VENUE_POPUP_ZOOM = 14.5;
+
+function venuePopupFlyOffset(){
+  const height=venueMap?.getContainer?.().clientHeight||0;
+  const offset=Math.round(Math.min(Math.max(height*.3,80),210));
+  return [0,-offset];
+}
+
+function flyToVenuePopup(loc){
+  venueMap.flyTo({
+    center:[loc.lng,loc.lat],
+    zoom:VENUE_POPUP_ZOOM,
+    offset:venuePopupFlyOffset(),
+    speed:.8,
+    essential:true,
+  });
+}
+
+function currentMapStyleUrl(){
+  return currentTheme()==="dark"?CARTO_DARK_MATTER_STYLE:CARTO_VOYAGER_STYLE;
+}
+
+function venueMapStyleReady(){
+  return Boolean(venueMap)&&mapLoaded&&(!venueMap.isStyleLoaded||venueMap.isStyleLoaded());
+}
+
+function refreshVenueMapOverlays(){
+  if(!venueMapStyleReady()) return;
+  addVenueLayers();
+  updateUserMarker(false);
+  renderMapView();
+  requestAnimationFrame(()=>venueMap.resize());
+}
+
+function syncMapTheme(){
+  if(!venueMap) return;
+  const next=currentMapStyleUrl();
+  if(venueMapStyle===next) return;
+  venueMapStyle=next;
+  venueMap.setStyle(next);
+}
+
 function locationQuery(loc){
   return hasCoords(loc)?`${loc.lat},${loc.lng}`:(loc.query||loc.label);
 }
@@ -403,9 +445,10 @@ function initVenueMap(){
     return;
   }
 
+  venueMapStyle=currentMapStyleUrl();
   venueMap=new maplibregl.Map({
     container:mapEl,
-    style:CARTO_VOYAGER_STYLE,
+    style:venueMapStyle,
     center:OSLO_CENTER,
     zoom:11,
     attributionControl:false,
@@ -414,10 +457,10 @@ function initVenueMap(){
   venueMap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   venueMap.on("load",()=>{
     mapLoaded=true;
-    addVenueLayers();
-    updateUserMarker(false);
-    renderMapView();
-    requestAnimationFrame(()=>venueMap.resize());
+    refreshVenueMapOverlays();
+  });
+  venueMap.on("style.load",()=>{
+    refreshVenueMapOverlays();
   });
 }
 
@@ -428,7 +471,7 @@ function stagePopupHtml(stage,snapshot){
     ? `<div class="popup-event-line"><span class="popup-prefix">${label}:</span><span class="popup-event-time">${escapeHtml(ev.time)}</span><button class="popup-event-artist" type="button" data-event-detail-id="${escapeHtml(ev.id)}">${escapeHtml(ev.artist)}</button></div>`
     : `<div class="popup-line"><span class="popup-prefix">${label}:</span> ${label==="Nå"?"ingen registrert":"ingen flere"}</div>`;
   const distanceText=Number.isFinite(snapshot?.distance)?`Avstand: ${formatDistance(snapshot.distance)}`:"";
-  return `<div class="popup-stage">${escapeHtml(stage)}</div>${stageMapInfoHtml(stage)}${eventLine("Nå",current)}${eventLine("Snart",next)}${distanceText?`<div class="popup-line">${distanceText}</div>`:""}`;
+  return `<div class="popup-stage-card"><div class="popup-stage">${escapeHtml(stage)}</div>${stageMapInfoHtml(stage)}${eventLine("Nå",current)}${eventLine("Snart",next)}${distanceText?`<div class="popup-line">${distanceText}</div>`:""}</div>`;
 }
 
 function popupTextWithBreaks(value){
@@ -470,7 +513,7 @@ function venueFeatureCollection(snapshots=scheduleSnapshots()){
 }
 
 function addVenueLayers(){
-  if(!mapLoaded) return;
+  if(!venueMapStyleReady()) return;
   if(venueMap.getSource("venues")) return;
 
   venueMap.addSource("venues",{type:"geojson",data:venueFeatureCollection()});
@@ -498,18 +541,21 @@ function addVenueLayers(){
     },
   });
 
-  venueMap.on("click","venue-dots",e=>{
-    const stage=e.features?.[0]?.properties?.stage;
-    if(stage) openStagePopup(stage);
-  });
-  venueMap.on("mouseenter","venue-dots",()=>{venueMap.getCanvas().style.cursor="pointer";});
-  venueMap.on("mouseleave","venue-dots",()=>{venueMap.getCanvas().style.cursor="";});
+  if(!venueLayerEventsBound){
+    venueMap.on("click","venue-dots",e=>{
+      const stage=e.features?.[0]?.properties?.stage;
+      if(stage) openStagePopup(stage);
+    });
+    venueMap.on("mouseenter","venue-dots",()=>{venueMap.getCanvas().style.cursor="pointer";});
+    venueMap.on("mouseleave","venue-dots",()=>{venueMap.getCanvas().style.cursor="";});
+    venueLayerEventsBound=true;
+  }
 
   updateVenueMarkers();
 }
 
 function updateVenueMarkers(snapshots=scheduleSnapshots()){
-  if(!mapLoaded) return;
+  if(!venueMapStyleReady()) return;
   const source=venueMap.getSource("venues");
   if(source) source.setData(venueFeatureCollection(snapshots));
 }
@@ -526,7 +572,7 @@ function userFeatureCollection(){
 }
 
 function addUserLocationLayers(){
-  if(!mapLoaded||venueMap.getSource("user-location")) return;
+  if(!venueMapStyleReady()||venueMap.getSource("user-location")) return;
   venueMap.addSource("user-location",{type:"geojson",data:userFeatureCollection()});
   venueMap.addLayer({
     id:"user-pulse",
@@ -588,7 +634,7 @@ function addUserLocationLayers(){
 function startUserPulse(){
   if(userPulseFrame) return;
   const frame=timestamp=>{
-    if(!venueMap||!venueMap.getLayer("user-pulse")){
+    if(!venueMapStyleReady()||!venueMap.getLayer("user-pulse")){
       userPulseFrame=null;
       return;
     }
@@ -603,9 +649,11 @@ function startUserPulse(){
 function updateUserMarker(fly=true){
   if(!mapLoaded||!userLocation) return;
   const lngLat=[userLocation.lng,userLocation.lat];
-  addUserLocationLayers();
-  const source=venueMap.getSource("user-location");
-  if(source) source.setData(userFeatureCollection());
+  if(venueMapStyleReady()){
+    addUserLocationLayers();
+    const source=venueMap.getSource("user-location");
+    if(source) source.setData(userFeatureCollection());
+  }
 
   if(fly) venueMap.flyTo({center:lngLat,zoom:12.7,speed:.8,essential:true});
 }
@@ -633,7 +681,7 @@ function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
   }
   if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
   else setStageMeta(stage);
-  venueMap.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.8,essential:true});
+  flyToVenuePopup(loc);
   openStagePopup(stage,{updateUrl:false});
 }
 
