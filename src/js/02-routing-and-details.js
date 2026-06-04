@@ -244,12 +244,76 @@ function eventMapPopupHtml(ev,snapshot){
         </div>
         <button class="popup-detail-favorite ${favoriteActive?"active":""}" type="button" data-popup-favorite-event="${escapeHtml(ev.id)}" aria-pressed="${favoriteActive?"true":"false"}" aria-label="${favoriteActive?"Fjern favoritt":"Legg til favoritt"}: ${escapeHtml(ev.artist)}">${favoriteActive?"★":"☆"}</button>
       </div>
-      <div class="popup-detail-description">${formatDescription(details.description)}</div>
+      <div class="popup-detail-description-wrap">
+        <div class="popup-detail-description">${formatDescription(details.description)}</div>
+        <span class="popup-detail-scrollbar" aria-hidden="true"><span class="popup-detail-scrollbar-thumb"></span></span>
+      </div>
       <div class="popup-detail-actions">
         <button class="popup-detail-action primary" type="button" data-stage-popup-stage="${escapeHtml(ev.stage)}">Scenen</button>
         <a class="popup-detail-action" href="${escapeHtml(googleArtistSearchUrl(ev.artist))}" target="_blank" rel="noopener">Søk på artist</a>
       </div>
     </div>`;
+}
+
+function syncPopupDescriptionScroll(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".popup-detail-description-wrap").forEach(wrap=>{
+      const scroller=wrap.querySelector(".popup-detail-description");
+      const thumb=wrap.querySelector(".popup-detail-scrollbar-thumb");
+      if(!scroller||!thumb) return;
+      if(wrap.dataset.scrollSynced==="true") return;
+      wrap.dataset.scrollSynced="true";
+
+      const update=()=>{
+        const scrollable=scroller.scrollHeight>scroller.clientHeight+1;
+        wrap.classList.toggle("is-scrollable",scrollable);
+        if(!scrollable){
+          wrap.classList.remove("is-at-bottom");
+          wrap.style.removeProperty("--popup-scrollbar-thumb-h");
+          wrap.style.removeProperty("--popup-scrollbar-thumb-y");
+          return;
+        }
+        const trackHeight=Math.max(0,scroller.clientHeight-6);
+        const thumbHeight=Math.max(18,Math.round(trackHeight*scroller.clientHeight/scroller.scrollHeight));
+        const maxY=Math.max(0,trackHeight-thumbHeight);
+        const scrollMax=Math.max(1,scroller.scrollHeight-scroller.clientHeight);
+        const thumbY=Math.round(scroller.scrollTop/scrollMax*maxY);
+        wrap.style.setProperty("--popup-scrollbar-thumb-h",`${thumbHeight}px`);
+        wrap.style.setProperty("--popup-scrollbar-thumb-y",`${thumbY}px`);
+        wrap.classList.toggle("is-at-bottom",scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-2);
+      };
+
+      const controller=new AbortController();
+      let resizeObserver=null;
+      let contentObserver=null;
+      let lifecycleObserver=null;
+      const cleanup=()=>{
+        if(document.contains(wrap)) return;
+        controller.abort();
+        resizeObserver?.disconnect();
+        contentObserver?.disconnect();
+        lifecycleObserver?.disconnect();
+      };
+
+      scroller.addEventListener("scroll",update,{passive:true,signal:controller.signal});
+      window.addEventListener("resize",update,{passive:true,signal:controller.signal});
+      window.addEventListener("orientationchange",update,{passive:true,signal:controller.signal});
+
+      if(typeof ResizeObserver!=="undefined"){
+        resizeObserver=new ResizeObserver(update);
+        resizeObserver.observe(wrap);
+        resizeObserver.observe(scroller);
+      }
+      if(typeof MutationObserver!=="undefined"){
+        contentObserver=new MutationObserver(update);
+        contentObserver.observe(scroller,{childList:true,subtree:true,characterData:true});
+        lifecycleObserver=new MutationObserver(cleanup);
+        lifecycleObserver.observe(document.body,{childList:true,subtree:true});
+      }
+
+      update();
+    });
+  });
 }
 
 function labelMapPopupCloseButton(){
@@ -281,6 +345,7 @@ function openEventMapPopup(ev,{updateUrl=true,replaceUrl=false}={}){
     .setHTML(eventMapPopupHtml(ev,snapshot))
     .addTo(venueMap);
   labelMapPopupCloseButton();
+  syncPopupDescriptionScroll();
 }
 
 function closeEventDetails({updateUrl=true}={}){
