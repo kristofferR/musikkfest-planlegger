@@ -12,6 +12,7 @@ textSizeToggle.addEventListener("click",()=>{
   setTextSizeLarge(!textSizeLarge());
   syncPopupDescriptionScroll();
   syncEventModalDescriptionScroll();
+  syncMapCheckScroll();
 });
 updateThemeToggle();
 updateTextSizeToggle();
@@ -163,6 +164,23 @@ const mapStageChecks=document.getElementById("mapStageChecks");
 allStages.forEach(stage=>{
   mapStageChecks.appendChild(createMapCheckRow(stage,stage,"stage"));
 });
+
+function syncMapCheckScroll(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".map-check-list-wrap").forEach(wrap=>{
+      const scroller=wrap.querySelector(".map-check-list");
+      const thumb=wrap.querySelector(".map-check-scrollbar-thumb");
+      syncScrollableDescription(wrap,scroller,thumb,"map-check");
+    });
+  });
+}
+
+document.querySelectorAll(".map-check-menu").forEach(menu=>{
+  menu.addEventListener("toggle",()=>{
+    if(menu.open) syncMapCheckScroll();
+  });
+});
+syncMapCheckScroll();
 
 mapGenreChecks.addEventListener("change",e=>{
   const input=e.target.closest?.("input[data-kind='genre']");

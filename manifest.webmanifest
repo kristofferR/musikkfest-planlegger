@@ -1,0 +1,24 @@
+{
+  "name": "Musikkfest 2026 - interaktivt program",
+  "short_name": "Musikkfest 2026",
+  "description": "Interaktivt program og kart for Musikkfest Oslo 2026.",
+  "start_url": "/musikkfest/",
+  "scope": "/musikkfest/",
+  "display": "standalone",
+  "background_color": "#f5f3ee",
+  "theme_color": "#1a1814",
+  "icons": [
+    {
+      "src": "/musikkfest/assets/icons/suboktav-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/musikkfest/assets/icons/suboktav-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
