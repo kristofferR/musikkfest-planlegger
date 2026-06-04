@@ -526,12 +526,6 @@ function initVenueMap(){
       scheduleVenueMapOverlayRefresh();
     }
   });
-  venueMap.getContainer().addEventListener("pointerdown",()=>{
-    scrollVenueMapIntoView({force:true});
-  },{passive:true});
-  venueMap.getContainer().addEventListener("focusin",()=>{
-    scrollVenueMapIntoView({force:true});
-  });
 }
 
 function stagePopupHtml(stage,snapshot){
@@ -748,7 +742,6 @@ function openStagePopup(stage,{updateUrl=false,replaceUrl=false}={}){
   if(!venueMap||!mapLoaded||!hasCoords(loc)) return;
   if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
   else setStageMeta(stage);
-  scrollVenueMapIntoView({force:true});
   const snapshot=scheduleSnapshots().find(item=>item.stage===stage);
   if(!venuePopup) venuePopup=new maplibregl.Popup({offset:16,maxWidth:"360px"});
   venuePopup
