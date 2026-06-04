@@ -20,6 +20,42 @@ PROTECT_FILE=$(mktemp)
 trap 'rm -f "$PROTECT_FILE"' EXIT
 
 REMOTE_TARGET=$(shell_quote "$TARGET")
+REMOTE_STORAGE_OVERRIDE=$(shell_quote "${MUSIKKFEST_STORAGE_DIR:-}")
+
+ssh $SSH_OPTS "$HOST" "TARGET_DIR=$REMOTE_TARGET STORAGE_OVERRIDE=$REMOTE_STORAGE_OVERRIDE sh -s" <<'REMOTE_STORAGE_SH'
+set -eu
+
+target=${TARGET_DIR%/}
+site_root=$(dirname -- "$target")
+htdocs_dir=$(dirname -- "$site_root")
+account_root=$(dirname -- "$htdocs_dir")
+
+if [ -n "$STORAGE_OVERRIDE" ]; then
+  storage=$STORAGE_OVERRIDE
+elif [ "$(basename -- "$htdocs_dir")" = "htdocs" ]; then
+  storage="$account_root/.musikkfest-lister"
+else
+  storage="$site_root/.musikkfest-lister"
+fi
+
+old_storage="$site_root/.musikkfest-lister"
+case "$old_storage" in
+  */.musikkfest-lister) ;;
+  *) echo "Refusing unsafe storage cleanup path: $old_storage" >&2; exit 1 ;;
+esac
+
+mkdir -p -- "$storage"
+if [ -d "$old_storage" ] && [ "$old_storage" != "$storage" ]; then
+  if [ -f "$old_storage/lists.json" ] && [ ! -f "$storage/lists.json" ]; then
+    cp -p -- "$old_storage/lists.json" "$storage/lists.json"
+  fi
+  rm -rf -- "$old_storage"
+fi
+
+chmod 700 "$storage"
+find "$storage" -maxdepth 1 -type f -exec chmod 600 {} \;
+REMOTE_STORAGE_SH
+
 {
   printf "protect .musikkfest-lister/***\n"
   printf "protect */.musikkfest-list\n"
