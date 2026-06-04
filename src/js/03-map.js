@@ -640,6 +640,42 @@ function userFeatureCollection(){
   };
 }
 
+function createUserLocationMarkerElement(){
+  const marker=document.createElement("div");
+  marker.className="user-location-marker";
+
+  const label=document.createElement("span");
+  label.className="user-location-label";
+  label.textContent="Du er her";
+
+  const pulse=document.createElement("span");
+  pulse.className="user-location-pulse";
+
+  const dot=document.createElement("span");
+  dot.className="user-location-dot";
+
+  marker.appendChild(label);
+  marker.appendChild(pulse);
+  marker.appendChild(dot);
+  return marker;
+}
+
+function syncUserLocationMarker(){
+  if(!venueMap) return;
+  if(!userLocation){
+    userLocationMarker?.remove();
+    userLocationMarker=null;
+    return;
+  }
+  if(!userLocationMarker){
+    userLocationMarker=new maplibregl.Marker({
+      element:createUserLocationMarkerElement(),
+      anchor:"center",
+    }).addTo(venueMap);
+  }
+  userLocationMarker.setLngLat([userLocation.lng,userLocation.lat]);
+}
+
 function addUserLocationLayers(){
   if(!venueMapStyleReady()) return;
   if(!venueMap.getSource("user-location")){
@@ -728,14 +764,8 @@ function startUserPulse(){
 function updateUserMarker(fly=true){
   if(!venueMap||!userLocation) return;
   if(!mapLoaded) return;
-  if(!venueMapStyleReady()){
-    scheduleVenueMapOverlayRefresh(120);
-    return;
-  }
   const lngLat=[userLocation.lng,userLocation.lat];
-  addUserLocationLayers();
-  const source=venueMap.getSource("user-location");
-  if(source) source.setData(userFeatureCollection());
+  syncUserLocationMarker();
 
   if(fly) venueMap.flyTo({center:lngLat,zoom:12.7,speed:.8,essential:true});
 }
