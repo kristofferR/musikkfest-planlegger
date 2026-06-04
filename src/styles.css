@@ -843,6 +843,12 @@ body.map-active footer{display:none}
   display:block;font-family:var(--mono);font-size:var(--fs-10);letter-spacing:.08em;text-transform:uppercase;
   color:var(--faint);margin-bottom:4px;
 }
+.info-modal-github{
+  display:inline-flex;align-items:center;justify-content:center;margin-top:8px;
+  color:var(--text);opacity:.65;text-decoration:none;transition:opacity .12s;
+}
+.info-modal-github:hover{opacity:1;text-decoration:none}
+.info-modal-github-icon{display:block;width:20px;height:20px}
 
 /* ── EVENT DETAILS ── */
 .event-modal-overlay{
