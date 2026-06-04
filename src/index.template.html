@@ -9,11 +9,15 @@
 <meta name="theme-color" content="#1a1814">
 <script>
 (() => {
-  const key = "musikkfest-oslo-2026-manual-theme";
+  const themeKey = "musikkfest-oslo-2026-manual-theme";
+  const textSizeKey = "musikkfest-oslo-2026-text-size";
   let theme = "light";
   try {
-    const saved = localStorage.getItem(key);
+    const saved = localStorage.getItem(themeKey);
     theme = saved === "dark" ? "dark" : "light";
+    if (localStorage.getItem(textSizeKey) === "large") {
+      document.documentElement.dataset.textSize = "large";
+    }
   } catch {}
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
@@ -70,6 +74,7 @@
   <span class="topbar-title">Musikkfest Oslo 2026</span>
   <div class="topbar-actions">
     <button class="info-toggle" id="infoToggle" type="button" aria-label="Vis info" title="Info">i</button>
+    <button class="text-size-toggle" id="textSizeToggle" type="button" aria-label="Øk skriftstørrelsen" title="Øk skriftstørrelsen" aria-pressed="false">Aa</button>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Bytt til mørk modus" title="Bytt til mørk modus" aria-pressed="false">☾</button>
   </div>
 </div>
