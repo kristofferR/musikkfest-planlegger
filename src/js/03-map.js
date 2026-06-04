@@ -540,6 +540,9 @@ function initVenueMap(){
     if(!venueMap.getSource("venues")||!venueMap.getLayer("venue-dots")){
       scheduleVenueMapOverlayRefresh();
     }
+    if(userLocation&&!venueMap.getLayer("user-dot")){
+      updateUserMarker(false);
+    }
   });
 }
 
