@@ -619,18 +619,19 @@ function setStageSelected(stage,selected){
   normalizeStageFilter();
 }
 
-function setAllGenres(){
+function setAllGenres(selected){
   activeGenres.clear();
-  activeGenresExplicit=false;
+  activeGenresExplicit=!selected;
 }
 
-function setAllStages(){
+function setAllStages(selected){
   activeStages.clear();
-  activeStagesExplicit=false;
+  activeStagesExplicit=!selected;
 }
 
 function mapGenreSummary(){
   if(!activeGenresExplicit) return "Alle sjangre";
+  if(activeGenres.size===0) return "Ingen sjangre";
   if(activeGenres.size===1){
     const genre=[...activeGenres][0];
     return GENRE_LABELS[genre]||genre;
@@ -640,6 +641,7 @@ function mapGenreSummary(){
 
 function mapStageSummary(){
   if(!activeStagesExplicit) return "Alle scener";
+  if(activeStages.size===0) return "Ingen scener";
   if(activeStages.size===1) return [...activeStages][0];
   return `${activeStages.size} scener`;
 }

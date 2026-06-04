@@ -35,17 +35,27 @@ function renderChips(){
   }
 
   if(activeGenresExplicit){
-    activeGenres.forEach(g=>{
-      const label=GENRE_LABELS[g]||g;
-      const c=createFilterChip("genre-chip",label,`Fjern sjangerfilter: ${label}`,()=>{activeGenres.delete(g);normalizeGenreFilter();render();});
+    if(activeGenres.size===0){
+      const c=createFilterChip("genre-chip","Ingen sjangre","Nullstill sjangerfilter",()=>{setAllGenres(true);render();});
       chips.appendChild(c); any=true;
-    });
+    }else{
+      activeGenres.forEach(g=>{
+        const label=GENRE_LABELS[g]||g;
+        const c=createFilterChip("genre-chip",label,`Fjern sjangerfilter: ${label}`,()=>{activeGenres.delete(g);normalizeGenreFilter();render();});
+        chips.appendChild(c); any=true;
+      });
+    }
   }
   if(activeStagesExplicit){
-    activeStages.forEach(s=>{
-      const c=createFilterChip("stage-chip",s,`Fjern scenefilter: ${s}`,()=>{activeStages.delete(s);normalizeStageFilter();render();});
+    if(activeStages.size===0){
+      const c=createFilterChip("stage-chip","Ingen scener","Nullstill scenefilter",()=>{setAllStages(true);render();});
       chips.appendChild(c); any=true;
-    });
+    }else{
+      activeStages.forEach(s=>{
+        const c=createFilterChip("stage-chip",s,`Fjern scenefilter: ${s}`,()=>{activeStages.delete(s);normalizeStageFilter();render();});
+        chips.appendChild(c); any=true;
+      });
+    }
   }
   if(searchQuery){
     const c=createFilterChip("","Søk: "+searchQuery,`Fjern søk: ${searchQuery}`,()=>{

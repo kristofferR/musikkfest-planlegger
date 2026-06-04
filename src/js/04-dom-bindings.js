@@ -197,12 +197,22 @@ mapStageChecks.addEventListener("change",e=>{
   render();
 });
 document.getElementById("mapGenreAll").addEventListener("click",()=>{
-  setAllGenres();
+  setAllGenres(true);
+  syncDrawerPills();
+  render();
+});
+document.getElementById("mapGenreNone").addEventListener("click",()=>{
+  setAllGenres(false);
   syncDrawerPills();
   render();
 });
 document.getElementById("mapStageAll").addEventListener("click",()=>{
-  setAllStages();
+  setAllStages(true);
+  syncDrawerPills();
+  render();
+});
+document.getElementById("mapStageNone").addEventListener("click",()=>{
+  setAllStages(false);
   syncDrawerPills();
   render();
 });
