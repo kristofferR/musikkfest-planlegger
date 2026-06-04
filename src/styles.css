@@ -594,32 +594,6 @@ body.map-active footer{display:none}
   width:100%;height:100%;min-height:420px;border:1px solid var(--border);
   border-radius:10px;overflow:hidden;background:#dce8e6;
 }
-.user-location-marker{
-  position:relative;width:96px;height:62px;pointer-events:none;z-index:5;
-}
-.user-location-label{
-  position:absolute;left:50%;bottom:39px;transform:translateX(-50%);
-  white-space:nowrap;border:1px solid rgba(0,0,0,.12);border-radius:999px;
-  background:rgba(255,255,255,.94);color:#111;font-family:var(--font);
-  font-size:var(--fs-11);font-weight:600;line-height:1;padding:5px 8px;
-  box-shadow:0 5px 14px rgba(0,0,0,.18);
-}
-.user-location-pulse,
-.user-location-dot{
-  position:absolute;left:50%;top:50%;border-radius:999px;transform:translate(-50%,-50%);
-}
-.user-location-pulse{
-  width:46px;height:46px;background:rgba(243,185,36,.32);
-  border:2px solid rgba(255,255,255,.9);animation:user-location-pulse 1.8s ease-out infinite;
-}
-.user-location-dot{
-  width:16px;height:16px;background:#111;border:2px solid #fff;
-  box-shadow:0 2px 8px rgba(0,0,0,.34);
-}
-@keyframes user-location-pulse{
-  from{opacity:.72;transform:translate(-50%,-50%) scale(.74)}
-  to{opacity:0;transform:translate(-50%,-50%) scale(1.35)}
-}
 .map-sidebar{
   min-height:0;overflow:hidden;border:1px solid var(--border);
   border-radius:10px;background:var(--surface);display:flex;flex-direction:column;
