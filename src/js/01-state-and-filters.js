@@ -110,6 +110,7 @@ const screenshotLocation = screenshotLocationFromQuery();
 let locationRequested = Boolean(screenshotLocation);
 let locationState = screenshotLocation ? "granted" : "idle";
 let userLocation = screenshotLocation;
+let userLocationMarker = null;
 let venuePopup = null;
 let userPulseFrame = null;
 let activeDetailEvent = null;
