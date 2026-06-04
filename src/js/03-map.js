@@ -465,8 +465,28 @@ function updateLocationStatus(){
   }
 }
 
+function applyUserLocation(loc,{fly=true}={}){
+  userLocation={
+    lat:loc.lat,
+    lng:loc.lng,
+    accuracy:loc.accuracy,
+  };
+  locationState="granted";
+  updateUserMarker(fly);
+  renderMapView();
+}
+
 function requestUserLocation(){
   locationRequested=true;
+  if(screenshotLocation){
+    locationState="loading";
+    renderMapView();
+    const applyFakeLocation=()=>applyUserLocation(screenshotLocation,{fly:false});
+    if(venueMap&&!mapLoaded) venueMap.once("load",applyFakeLocation);
+    else requestAnimationFrame(applyFakeLocation);
+    return;
+  }
+
   if(!navigator.geolocation){
     locationState="error";
     renderMapView();
@@ -476,14 +496,11 @@ function requestUserLocation(){
   locationState="loading";
   renderMapView();
   navigator.geolocation.getCurrentPosition(pos=>{
-    userLocation={
+    applyUserLocation({
       lat:pos.coords.latitude,
       lng:pos.coords.longitude,
       accuracy:pos.coords.accuracy,
-    };
-    locationState="granted";
-    updateUserMarker();
-    renderMapView();
+    });
   },err=>{
     locationState=err.code===1?"denied":"error";
     renderMapView();
@@ -817,6 +834,7 @@ function setView(view,{askLocation=false,updateHash=true}={}){
   if(view==="map"){
     document.body.classList.remove("chips-visible");
     initVenueMap();
+    if(screenshotLocation&&!userLocation&&!locationRequested) requestUserLocation();
     renderMapView();
     requestAnimationFrame(()=>venueMap?.resize());
     if(askLocation&&!locationRequested) requestUserLocation();
