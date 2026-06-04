@@ -588,14 +588,16 @@ function isStageSelected(stage){
 }
 
 function normalizeGenreFilter(){
-  if(activeGenresExplicit&&selectableGenres.every(g=>activeGenres.has(g))){
+  // En tom seleksjon finnes ikke: alt valgt eller ingenting valgt betyr begge «alle sjangre».
+  if(activeGenresExplicit&&(activeGenres.size===0||selectableGenres.every(g=>activeGenres.has(g)))){
     activeGenres.clear();
     activeGenresExplicit=false;
   }
 }
 
 function normalizeStageFilter(){
-  if(activeStagesExplicit&&allStages.every(stage=>activeStages.has(stage))){
+  // En tom seleksjon finnes ikke: alt valgt eller ingenting valgt betyr begge «alle scener».
+  if(activeStagesExplicit&&(activeStages.size===0||allStages.every(stage=>activeStages.has(stage)))){
     activeStages.clear();
     activeStagesExplicit=false;
   }
@@ -619,19 +621,18 @@ function setStageSelected(stage,selected){
   normalizeStageFilter();
 }
 
-function setAllGenres(selected){
+function setAllGenres(){
   activeGenres.clear();
-  activeGenresExplicit=!selected;
+  activeGenresExplicit=false;
 }
 
-function setAllStages(selected){
+function setAllStages(){
   activeStages.clear();
-  activeStagesExplicit=!selected;
+  activeStagesExplicit=false;
 }
 
 function mapGenreSummary(){
   if(!activeGenresExplicit) return "Alle sjangre";
-  if(activeGenres.size===0) return "Ingen sjangre";
   if(activeGenres.size===1){
     const genre=[...activeGenres][0];
     return GENRE_LABELS[genre]||genre;
@@ -641,7 +642,6 @@ function mapGenreSummary(){
 
 function mapStageSummary(){
   if(!activeStagesExplicit) return "Alle scener";
-  if(activeStages.size===0) return "Ingen scener";
   if(activeStages.size===1) return [...activeStages][0];
   return `${activeStages.size} scener`;
 }

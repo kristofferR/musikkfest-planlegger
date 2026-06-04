@@ -35,27 +35,17 @@ function renderChips(){
   }
 
   if(activeGenresExplicit){
-    if(activeGenres.size===0){
-      const c=createFilterChip("genre-chip","Ingen sjangre","Nullstill sjangerfilter",()=>{setAllGenres(true);render();});
+    activeGenres.forEach(g=>{
+      const label=GENRE_LABELS[g]||g;
+      const c=createFilterChip("genre-chip",label,`Fjern sjangerfilter: ${label}`,()=>{activeGenres.delete(g);normalizeGenreFilter();render();});
       chips.appendChild(c); any=true;
-    }else{
-      activeGenres.forEach(g=>{
-        const label=GENRE_LABELS[g]||g;
-        const c=createFilterChip("genre-chip",label,`Fjern sjangerfilter: ${label}`,()=>{activeGenres.delete(g);render();});
-        chips.appendChild(c); any=true;
-      });
-    }
+    });
   }
   if(activeStagesExplicit){
-    if(activeStages.size===0){
-      const c=createFilterChip("stage-chip","Ingen scener","Nullstill scenefilter",()=>{setAllStages(true);render();});
+    activeStages.forEach(s=>{
+      const c=createFilterChip("stage-chip",s,`Fjern scenefilter: ${s}`,()=>{activeStages.delete(s);normalizeStageFilter();render();});
       chips.appendChild(c); any=true;
-    }else{
-      activeStages.forEach(s=>{
-        const c=createFilterChip("stage-chip",s,`Fjern scenefilter: ${s}`,()=>{activeStages.delete(s);render();});
-        chips.appendChild(c); any=true;
-      });
-    }
+    });
   }
   if(timeFrom||timeTo){
     const label=(timeFrom&&timeTo)?`${timeFrom}–${timeTo}`:timeFrom?`Fra ${timeFrom}`:`Til ${timeTo}`;
