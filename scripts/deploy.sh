@@ -2,6 +2,7 @@
 set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+DIST_DIR="$ROOT_DIR/dist"
 HOST=${MUSIKKFEST_DEPLOY_HOST:-root@65.21.5.205}
 TARGET=${MUSIKKFEST_DEPLOY_TARGET:-/home/suboktav/htdocs/suboktav.no/musikkfest/}
 CONTROL=${MUSIKKFEST_DEPLOY_CONTROL:-/tmp/suboktav-root-65.21.5.205.sock}
@@ -14,6 +15,17 @@ if ssh -S "$CONTROL" -o BatchMode=yes -O check "$HOST" >/dev/null 2>&1; then
   SSH_OPTS="-o ControlPath=$CONTROL -o BatchMode=yes"
 else
   SSH_OPTS="-o BatchMode=yes"
+fi
+
+if [ "${MUSIKKFEST_SKIP_BUILD:-}" != "1" ]; then
+  if ! command -v bun >/dev/null 2>&1; then
+    echo "bun is required for deploy builds." >&2
+    exit 1
+  fi
+  (cd "$ROOT_DIR" && bun run build)
+elif [ ! -d "$DIST_DIR" ]; then
+  echo "dist/ does not exist. Run bun run build first, or unset MUSIKKFEST_SKIP_BUILD." >&2
+  exit 1
 fi
 
 PROTECT_FILE=$(mktemp)
@@ -70,14 +82,10 @@ REMOTE_STORAGE_SH
 
 rsync -az --delete \
   --filter=". $PROTECT_FILE" \
-  --exclude ".git/" \
-  --exclude ".gitignore" \
   --exclude ".DS_Store" \
-  --exclude "README.md" \
-  --exclude "scripts/" \
   --exclude ".musikkfest-lister/" \
   --exclude ".musikkfest-list" \
   --exclude "*/.musikkfest-list" \
   --exclude "*.bak.*" \
   -e "ssh $SSH_OPTS" \
-  "$ROOT_DIR/" "$HOST:$TARGET"
+  "$DIST_DIR/" "$HOST:$TARGET"

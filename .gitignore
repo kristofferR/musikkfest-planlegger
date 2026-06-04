@@ -1,9 +1,10 @@
 .DS_Store
 *.bak.*
 *.log
+dist/
+node_modules/
 
 # Runtime data generated on the server
 .musikkfest-lister/
 .musikkfest-list
 */.musikkfest-list
-
