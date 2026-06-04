@@ -298,8 +298,24 @@ function syncSoonModeButtons(){
   });
 }
 
+function scrollVenueMapIntoView(){
+  if(!window.matchMedia("(max-width: 640px)").matches) return;
+  const mapEl=document.getElementById("venueMap");
+  if(!mapEl) return;
+  const behavior=window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth";
+  mapEl.scrollIntoView({block:"start",inline:"nearest",behavior});
+}
+
 function createLiveItem(item,type){
   const ev=type==="now"?item.current:item.next;
+  const openStageFromLive=()=>{
+    scrollVenueMapIntoView();
+    focusStage(item.stage);
+  };
+  const openEventFromLive=()=>{
+    scrollVenueMapIntoView();
+    openEventMapPopup(ev);
+  };
   const row=document.createElement("div");
   row.className="live-item";
   row.tabIndex=0;
@@ -325,7 +341,7 @@ function createLiveItem(item,type){
   stage.setAttribute("aria-label",`Vis ${item.stage} på kartet`);
   stage.addEventListener("click",e=>{
     e.stopPropagation();
-    focusStage(item.stage);
+    openStageFromLive();
   });
 
   main.appendChild(artist);
@@ -355,10 +371,10 @@ function createLiveItem(item,type){
   row.appendChild(time);
   row.appendChild(main);
   row.appendChild(meta);
-  row.addEventListener("click",()=>openEventMapPopup(ev));
+  row.addEventListener("click",openEventFromLive);
   row.addEventListener("keydown",e=>{
     if(e.target!==row) return;
-    handleKeyboardOpen(e,()=>openEventMapPopup(ev));
+    handleKeyboardOpen(e,openEventFromLive);
   });
   return row;
 }
