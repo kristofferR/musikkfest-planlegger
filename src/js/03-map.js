@@ -273,6 +273,17 @@ function scheduleSnapshots(clock=festivalClock()){
   });
 }
 
+// Every matching upcoming concert at a stage (not just the next one). Used to
+// expand the "soon" list to a stage's full remaining lineup when the user has
+// narrowed the map to specific scene(s).
+function upcomingStageEvents(stage,clock){
+  if(clock.mode==="after") return [];
+  return (stageEvents.get(stage)||[]).filter(ev=>{
+    if(!matches(ev)) return false;
+    return clock.mode==="live"?ev.min>clock.min:true;
+  });
+}
+
 function sortByDistanceThenTime(a,b,type){
   const ad=a.distance,bd=b.distance;
   if(Number.isFinite(ad)&&Number.isFinite(bd)&&ad!==bd) return ad-bd;
@@ -800,8 +811,13 @@ function renderMapView(){
   const nowItems=snapshots
     .filter(item=>item.current)
     .sort((a,b)=>sortByDistanceThenTime(a,b,"now"));
-  const soonItems=sortSoonItems(snapshots
-    .filter(item=>item.next)
+  // With specific scene(s) selected, show every upcoming concert at those
+  // scenes; otherwise keep the one-per-stage "next up near me" overview.
+  const soonSource=activeStagesExplicit
+    ? snapshots.flatMap(item=>
+        upcomingStageEvents(item.stage,clock).map(ev=>({...item,next:ev})))
+    : snapshots.filter(item=>item.next);
+  const soonItems=sortSoonItems(soonSource
     .map(item=>({
       ...item,
       startsIn:minutesUntil(item.next,clock),
