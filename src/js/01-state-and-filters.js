@@ -38,7 +38,7 @@ const FAVORITES_LIST_NAME_PARAM = "navn";
 const DEFAULT_FAVORITE_LIST_NAME = "Favoritter";
 const DEFAULT_PAGE_TITLE = "Musikkfest 2026 - interaktivt program og kart";
 const DEFAULT_PAGE_DESCRIPTION = "Interaktivt program og kart for Musikkfest Oslo 2026. Finn scener, favoritter og musikken som spiller nå eller snart.";
-const SHARE_MAP_IMAGE_SRC = "/musikkfest/musikkfest-map-thumb.png";
+const SHARE_MAP_IMAGE_SRC = "/musikkfest/musikkfest-2026-map-thumb.png";
 const SHARE_TITLE_FONT = "'Inter', 'SF Pro Display', 'Geist', -apple-system, BlinkMacSystemFont, sans-serif";
 const SCREENSHOT_LOCATION_PRESETS = {
   "schous-plass": {lat:59.92031,lng:10.75954,accuracy:20},

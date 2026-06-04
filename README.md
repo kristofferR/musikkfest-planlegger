@@ -8,7 +8,7 @@ Uoffisiell planlegger for Musikkfest Oslo 2026 med interaktivt program, kart, fa
 - `dist/` genereres av `bun run build` og er det som deployes.
 - `api/list.php` lagrer delbare favorittlister.
 - `share*.php` og `del*/index.php` håndterer deling, metadata og delingsbilder.
-- `musikkfest_2026_og_ekte_artister_1200x630.png` og `musikkfest-map-thumb.png` brukes til previews og genererte bilder.
+- `musikkfest-2026-preview.png` og `musikkfest-2026-map-thumb.png` brukes til previews og genererte bilder.
 - `assets/vendor/maplibre-gl/5.12.0/`, `assets/vendor/svgl/` og `assets/fonts/google/` er vendored frontend-avhengigheter som serveres lokalt.
 - `scripts/build.mjs` bygger produksjonsfiler til `dist/` med minifisert HTML/CSS/JS, cache-busting på asset-lenker og `.gz`-versjoner av tekstbaserte statiske filer.
 
