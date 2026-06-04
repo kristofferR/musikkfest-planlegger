@@ -72,6 +72,7 @@ document.addEventListener("click",e=>{
     const snapshot=scheduleSnapshots().find(item=>item.stage===ev.stage);
     venuePopup.setHTML(eventMapPopupHtml(ev,snapshot));
     labelMapPopupCloseButton();
+    syncPopupDescriptionScroll();
   }
 });
 
