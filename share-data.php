@@ -6,6 +6,9 @@ const MF_LIST_PARAM = 'liste';
 const MF_LIST_NAME_PARAM = 'navn';
 const MF_DEFAULT_LIST_NAME = 'Favoritter';
 const MF_PUBLIC_BASE = 'https://suboktav.no/musikkfest';
+const MF_MAX_STORED_LISTS = 5000;
+const MF_SAVE_RATE_WINDOW_SECONDS = 600;
+const MF_MAX_SAVE_REQUESTS_PER_WINDOW = 40;
 
 function mf_html_path(): string {
     $indexPath = __DIR__ . '/index.html';
@@ -16,10 +19,22 @@ function mf_html_path(): string {
 }
 
 function mf_storage_dir(): string {
-    $dir = dirname(__DIR__) . '/.musikkfest-lister';
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0770, true);
+    $override = trim((string) (getenv('MUSIKKFEST_STORAGE_DIR') ?: ''));
+    if ($override !== '') {
+        $dir = $override;
+    } else {
+        $appDir = __DIR__;
+        $siteRoot = dirname($appDir);
+        $htdocsDir = dirname($siteRoot);
+        $accountRoot = dirname($htdocsDir);
+        $dir = basename($htdocsDir) === 'htdocs'
+            ? $accountRoot . '/.musikkfest-lister'
+            : $siteRoot . '/.musikkfest-lister';
     }
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0700, true);
+    }
+    @chmod($dir, 0700);
     return $dir;
 }
 
@@ -29,6 +44,14 @@ function mf_lists_path(): string {
 
 function mf_list_lock_path(): string {
     return mf_storage_dir() . '/lists.lock';
+}
+
+function mf_rate_limit_path(): string {
+    return mf_storage_dir() . '/rate-limits.json';
+}
+
+function mf_rate_limit_lock_path(): string {
+    return mf_storage_dir() . '/rate-limits.lock';
 }
 
 function mf_clean_list_name(?string $raw): string {
@@ -115,6 +138,66 @@ function mf_write_lists_unlocked(array $store): void {
         return;
     }
     @file_put_contents(mf_lists_path(), $payload . "\n", LOCK_EX);
+    @chmod(mf_lists_path(), 0600);
+}
+
+function mf_read_json_file(string $path): array {
+    if (!is_file($path)) {
+        return [];
+    }
+    $json = json_decode((string) @file_get_contents($path), true);
+    return is_array($json) ? $json : [];
+}
+
+function mf_write_json_file(string $path, array $payload): void {
+    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return;
+    }
+    @file_put_contents($path, $json . "\n", LOCK_EX);
+    @chmod($path, 0600);
+}
+
+function mf_rate_limit_key(?string $remoteAddress): string {
+    $address = trim((string) $remoteAddress);
+    return hash('sha256', $address !== '' ? $address : 'unknown');
+}
+
+function mf_save_rate_allowed(string $key, int $now): bool {
+    $lock = @fopen(mf_rate_limit_lock_path(), 'c');
+    if (!$lock) {
+        return true;
+    }
+
+    flock($lock, LOCK_EX);
+    try {
+        $windowStart = $now - MF_SAVE_RATE_WINDOW_SECONDS;
+        $limits = mf_read_json_file(mf_rate_limit_path());
+        foreach ($limits as $storedKey => $entry) {
+            $startedAt = is_array($entry) ? (int) ($entry['startedAt'] ?? 0) : 0;
+            if ($startedAt < $windowStart) {
+                unset($limits[$storedKey]);
+            }
+        }
+
+        $entry = is_array($limits[$key] ?? null) ? $limits[$key] : ['startedAt' => $now, 'count' => 0];
+        if ((int) ($entry['startedAt'] ?? 0) < $windowStart) {
+            $entry = ['startedAt' => $now, 'count' => 0];
+        }
+        if ((int) ($entry['count'] ?? 0) >= MF_MAX_SAVE_REQUESTS_PER_WINDOW) {
+            mf_write_json_file(mf_rate_limit_path(), $limits);
+            return false;
+        }
+
+        $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
+        $limits[$key] = $entry;
+        mf_write_json_file(mf_rate_limit_path(), $limits);
+        return true;
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+        @chmod(mf_rate_limit_lock_path(), 0600);
+    }
 }
 
 function mf_slug_directory(string $slug): string {
@@ -197,12 +280,16 @@ function mf_save_named_list(?string $tokenRaw, string $nameRaw, string $shareCod
     if (!$lock) {
         throw new RuntimeException('Kunne ikke låse listelagring.');
     }
+    @chmod(mf_list_lock_path(), 0600);
 
     flock($lock, LOCK_EX);
     try {
         $store = mf_read_lists_unlocked();
         $currentSlug = (string) ($store['tokens'][$token] ?? '');
         $current = $currentSlug !== '' && is_array($store['lists'][$currentSlug] ?? null) ? $store['lists'][$currentSlug] : null;
+        if (!$current && count($store['lists']) >= MF_MAX_STORED_LISTS) {
+            throw new RuntimeException('Listelagring er full.');
+        }
         $currentBase = is_array($current) ? (string) ($current['base'] ?? '') : '';
         $slug = ($current && $currentBase === $base) ? $currentSlug : mf_unique_slug($base, $token, $store);
 

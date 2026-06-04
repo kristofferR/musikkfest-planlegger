@@ -34,4 +34,4 @@ Ha SSH-nokkel eller en apen SSH ControlMaster til serveren forst.
 ./scripts/deploy.sh
 ```
 
-Runtime-data for delbare lister ligger utenfor repoet pa serveren og skal ikke committes.
+Runtime-data for delbare lister ligger utenfor repoet og utenfor webroot pa serveren, og skal ikke committes. Sett `MUSIKKFEST_STORAGE_DIR` hvis lagringskatalogen ma overstyres.
