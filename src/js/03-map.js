@@ -459,7 +459,8 @@ function updateLocationStatus(){
     status.textContent="Kunne ikke hente posisjon. Listene sorteres etter tid.";
   }else{
     button.textContent="Bruk min posisjon";
-    status.textContent="Uten lokasjon sorteres Spiller snart etter starttid.";
+    status.textContent="";
+    status.hidden=true;
   }
 }
 
