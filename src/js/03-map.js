@@ -732,13 +732,17 @@ function addUserLocationLayers(){
 function startUserPulse(){
   if(userPulseFrame) return;
   const frame=timestamp=>{
-    if(!venueMapStyleReady()||!venueMap.getLayer("user-pulse")){
+    if(!venueMap||!venueMap.getLayer("user-pulse")){
       userPulseFrame=null;
       return;
     }
-    const progress=(timestamp%1800)/1800;
-    venueMap.setPaintProperty("user-pulse","circle-radius",24+progress*22);
-    venueMap.setPaintProperty("user-pulse","circle-opacity",0.36*(1-progress));
+    // Skip the frame (but keep the loop alive) while the style is momentarily
+    // unready, so a transient state never permanently kills the pulse.
+    if(venueMapStyleReady()){
+      const progress=(timestamp%1800)/1800;
+      venueMap.setPaintProperty("user-pulse","circle-radius",24+progress*22);
+      venueMap.setPaintProperty("user-pulse","circle-opacity",0.36*(1-progress));
+    }
     userPulseFrame=requestAnimationFrame(frame);
   };
   userPulseFrame=requestAnimationFrame(frame);
@@ -748,7 +752,10 @@ function updateUserMarker(fly=true){
   if(!venueMap||!userLocation) return;
   if(!mapLoaded) return;
   if(!venueMapStyleReady()){
-    scheduleVenueMapOverlayRefresh(120);
+    // Only retry while the dot is still missing. Once it exists, the pulse's
+    // per-frame paint updates keep isStyleLoaded() flapping, so rescheduling
+    // here would spin a resize/refresh loop that makes the map hard to pan.
+    if(!venueMap.getLayer("user-dot")) scheduleVenueMapOverlayRefresh(120);
     return;
   }
   const lngLat=[userLocation.lng,userLocation.lat];
