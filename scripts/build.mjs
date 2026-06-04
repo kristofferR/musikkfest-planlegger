@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { minify } from "html-minifier-terser";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "");
+const srcDir = join(rootDir, "src");
 const distDir = join(rootDir, "dist");
 const gzipAsync = promisify(gzip);
 
@@ -22,6 +23,16 @@ const copyEntries = [
   "share-data.php",
   "share-image.php",
   "share.php",
+];
+
+const scriptEntries = [
+  "01-state-and-filters.js",
+  "02-routing-and-details.js",
+  "03-map.js",
+  "04-dom-bindings.js",
+  "05-chips-and-share-utils.js",
+  "06-favorites-share.js",
+  "07-program-render.js",
 ];
 
 const gzipExtensions = new Set([".css", ".html", ".js", ".json", ".svg"]);
@@ -78,8 +89,49 @@ function restoreJsonLd(html, blocks) {
   );
 }
 
+function scriptJson(value) {
+  return JSON.stringify(value)
+    .replace(/<\/script/gi, "<\\/script")
+    .replace(/<!--/g, "<\\!--");
+}
+
+async function readProgramData() {
+  const source = await readFile(join(srcDir, "data", "program.json"), "utf8");
+  return JSON.parse(source);
+}
+
+function buildDataScript(program) {
+  return [
+    `const RAW = ${scriptJson(program.events)};`,
+    `const EVENT_DETAILS = ${scriptJson(program.eventDetails)};`,
+    `const GENRE_LABELS = ${scriptJson(program.genreLabels)};`,
+    `const DEFAULT_ARTIST_IMAGE_URL = ${scriptJson(program.defaultArtistImageUrl)};`,
+    `const STAGE_LOCATIONS = ${scriptJson(program.stageLocations)};`,
+    `const STAGE_MAP_INFO = ${scriptJson(program.stageMapInfo)};`,
+  ].join("\n");
+}
+
+async function buildAppScript() {
+  const program = await readProgramData();
+  const sections = await Promise.all(
+    scriptEntries.map((entry) => readFile(join(srcDir, "js", entry), "utf8")),
+  );
+  return [buildDataScript(program), ...sections].join("\n\n");
+}
+
+async function buildIndexSource() {
+  const [template, styles, appScript] = await Promise.all([
+    readFile(join(srcDir, "index.template.html"), "utf8"),
+    readFile(join(srcDir, "styles.css"), "utf8"),
+    buildAppScript(),
+  ]);
+  return template
+    .replace("%%MUSIKKFEST_CSS%%", styles.trim())
+    .replace("%%MUSIKKFEST_APP_JS%%", appScript.trim());
+}
+
 async function minifyIndex() {
-  const source = await addAssetVersions(await readFile(join(rootDir, "index.html"), "utf8"));
+  const source = await addAssetVersions(await buildIndexSource());
   const { protectedHtml, blocks } = protectJsonLd(source);
   const minified = await minify(protectedHtml, {
     collapseBooleanAttributes: true,
@@ -115,21 +167,40 @@ async function copyProductionFiles() {
   }
 }
 
+async function copyDataFiles() {
+  await cp(join(srcDir, "data"), join(distDir, "data"), {
+    recursive: true,
+    force: true,
+    dereference: false,
+  });
+}
+
 async function fileSize(path) {
   return (await stat(path)).size;
 }
 
+async function sourceBytes() {
+  const sourceFiles = [
+    join(srcDir, "index.template.html"),
+    join(srcDir, "styles.css"),
+    join(srcDir, "data", "program.json"),
+    ...scriptEntries.map((entry) => join(srcDir, "js", entry)),
+  ];
+  const sizes = await Promise.all(sourceFiles.map((path) => fileSize(path)));
+  return sizes.reduce((total, size) => total + size, 0);
+}
+
 async function writeManifest() {
-  const [sourceSize, distSize] = await Promise.all([
-    fileSize(join(rootDir, "index.html")),
+  const [sourceByteCount, distSize] = await Promise.all([
+    sourceBytes(),
     fileSize(join(distDir, "index.html")),
   ]);
   const manifest = {
     builtAt: new Date().toISOString(),
     index: {
-      sourceBytes: sourceSize,
+      sourceBytes: sourceByteCount,
       distBytes: distSize,
-      savedBytes: sourceSize - distSize,
+      savedBytes: sourceByteCount - distSize,
     },
   };
   await writeFile(join(distDir, "build-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -157,6 +228,7 @@ async function gzipStaticFiles(dir) {
 await rm(distDir, { recursive: true, force: true });
 await mkdir(distDir, { recursive: true });
 await copyProductionFiles();
+await copyDataFiles();
 await minifyIndex();
 await writeManifest();
 await gzipStaticFiles(distDir);
