@@ -351,10 +351,6 @@ main{padding-top:calc(var(--header-h) + var(--tabs-h) + 8px);padding-bottom:3rem
 
 .empty{text-align:center;padding:4rem 1rem;color:var(--faint);font-size:var(--fs-14)}
 
-.legend{display:flex;flex-wrap:wrap;gap:8px;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:1rem}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:var(--fs-11);color:var(--muted)}
-.leg-dot{width:9px;height:9px;border-radius:3px}
-
 /* ── FAVORITES VIEW ── */
 .favorites-view-panel{padding:12px 14px 28px}
 .favorites-layout{

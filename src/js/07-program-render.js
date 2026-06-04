@@ -290,16 +290,6 @@ function renderContent(){
     mc.appendChild(empty);
   }
 
-  // Legend
-  const leg=document.getElementById("legend");
-  const seen=new Set(data.filter(matches).map(d=>d.genre));
-  leg.innerHTML="";
-  Object.keys(GENRE_LABELS).filter(g=>seen.has(g)).forEach(g=>{
-    const i=document.createElement("div");i.className="leg-item";
-    const dot=document.createElement("div");dot.className=`leg-dot g-${g}`;
-    i.appendChild(dot);i.appendChild(document.createTextNode(GENRE_LABELS[g]));
-    leg.appendChild(i);
-  });
 }
 
 function render(){
