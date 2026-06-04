@@ -161,15 +161,10 @@ function toMin(t){
   return (h<4?h+24:h)*60+m;
 }
 
-function matches(ev,{includeTime=true}={}){
+function matches(ev){
   if(activeFavoritesOnly&&!isFavoriteFilterMatch(ev)) return false;
   if(activeGenresExplicit&&!activeGenres.has(ev.genre)) return false;
   if(activeStagesExplicit&&!activeStages.has(ev.stage)) return false;
-  if(includeTime){
-    const evMin=toMin(ev.time);
-    if(timeFrom && evMin<toMin(timeFrom)) return false;
-    if(timeTo   && evMin>toMin(timeTo))   return false;
-  }
   const q=searchQuery.toLowerCase();
   if(q && !ev.artist.toLowerCase().includes(q) && !ev.stage.toLowerCase().includes(q)) return false;
   return true;
@@ -259,7 +254,7 @@ function scheduleSnapshots(clock=festivalClock()){
     let next=null;
 
     events.forEach((ev,index)=>{
-      const includeEvent=matches(ev,{includeTime:false});
+      const includeEvent=matches(ev);
       const nextStart=events[index+1]?.min??ev.min+SET_DURATION_MIN;
       const inferredEnd=Math.min(nextStart,ev.min+SET_DURATION_MIN);
       if(includeEvent&&clock.mode==="live"&&clock.min>=ev.min&&clock.min<inferredEnd){
@@ -268,7 +263,7 @@ function scheduleSnapshots(clock=festivalClock()){
       if(includeEvent&&!next&&ev.min>clock.min) next=ev;
     });
 
-    if(clock.mode==="before") next=events.find(ev=>matches(ev,{includeTime:false}))||null;
+    if(clock.mode==="before") next=events.find(ev=>matches(ev))||null;
     if(clock.mode==="after") next=null;
 
     return {

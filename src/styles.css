@@ -153,21 +153,6 @@ body.map-active .active-chips,body.favorites-active .active-chips{display:none}
 .favorite-filter-btn.light:hover{border-color:rgba(0,0,0,.2);color:var(--text)}
 .favorite-filter-btn.light.active{background:#fff2bd;border-color:#e0ac15;color:#5c4100}
 
-/* Time row inside drawer */
-.time-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-top:4px}
-.time-group{display:flex;flex-direction:column;gap:3px}
-.time-sublabel{font-family:var(--mono);font-size:var(--fs-9);letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.3)}
-.time-input{
-  font-family:var(--mono);font-size:var(--fs-13);
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
-  border-radius:8px;color:#fff;padding:6px 10px;width:110px;outline:none;
-  transition:all .15s;cursor:pointer;
-}
-.time-input:focus{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
-.time-arrow{color:rgba(255,255,255,.3);font-size:var(--fs-14);padding-bottom:8px}
-.time-reset{font-family:var(--font);font-size:var(--fs-11);color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;padding:0 4px 8px;}
-.time-reset:hover{color:rgba(255,255,255,.75)}
-
 /* ── ACTIVE FILTER CHIPS (below topbar) ── */
 .active-chips{
   position:fixed;top:calc(var(--header-h) + var(--tabs-h));left:0;right:0;z-index:150;
@@ -189,7 +174,6 @@ body.map-active .active-chips,body.favorites-active .active-chips{display:none}
 .chip-x{font-size:var(--fs-13);line-height:1;opacity:.7}
 .chip.genre-chip{background:rgba(212,82,42,.35)}
 .chip.stage-chip{background:rgba(42,109,212,.35)}
-.chip.time-chip{background:rgba(255,255,255,.15)}
 .chip.favorite-chip{background:rgba(243,185,36,.34);color:#fff0b0}
 
 /* ── MAIN CONTENT ── */

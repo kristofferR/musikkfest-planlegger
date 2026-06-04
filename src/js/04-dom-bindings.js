@@ -211,23 +211,6 @@ document.addEventListener("click",e=>{
   document.querySelectorAll(".map-check-menu[open]").forEach(menu=>{menu.open=false;});
 });
 
-// ── TIME ──
-document.getElementById("timeFrom").addEventListener("change",e=>{
-  timeFrom=e.target.value; updateTimeReset(); render();
-});
-document.getElementById("timeTo").addEventListener("change",e=>{
-  timeTo=e.target.value; updateTimeReset(); render();
-});
-function updateTimeReset(){
-  document.getElementById("timeReset").style.display=(timeFrom||timeTo)?"inline":"none";
-}
-document.getElementById("timeReset").addEventListener("click",()=>{
-  timeFrom=""; timeTo="";
-  document.getElementById("timeFrom").value="";
-  document.getElementById("timeTo").value="";
-  updateTimeReset(); render();
-});
-
 // ── SEARCH ──
 document.getElementById("searchInput").addEventListener("input",e=>{
   searchQuery=e.target.value; render();
