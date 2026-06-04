@@ -644,7 +644,7 @@ body.map-active footer{display:none}
   border:1px solid rgba(0,0,0,.08);box-shadow:0 10px 34px rgba(0,0,0,.24);
 }
 .maplibregl-popup-close-button{
-  position:absolute;top:8px;right:8px;width:32px;height:32px;
+  position:absolute;top:8px;right:14px;width:32px;height:32px;
   display:flex;align-items:center;justify-content:center;
   border:1px solid rgba(0,0,0,.16);border-radius:9px;background:#fff;color:var(--text);
   box-shadow:0 3px 10px rgba(0,0,0,.16);
@@ -661,7 +661,7 @@ body.map-active footer{display:none}
   outline:2px solid rgba(42,109,212,.5);outline-offset:2px;
 }
 .popup-stage-card{width:300px;max-width:calc(100vw - 58px)}
-.popup-stage{font-size:var(--fs-13);font-weight:500;margin-bottom:4px;padding-right:38px}
+.popup-stage{font-size:var(--fs-13);font-weight:500;margin-bottom:4px;padding-right:46px}
 .popup-stage-meta{
   margin:7px 0 8px;padding:7px 8px;border:1px solid var(--border);
   border-radius:7px;background:#faf9f7;
@@ -1125,20 +1125,28 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px 
   .map-sidebar{max-height:none}
   .map-toolbar-row{align-items:flex-start}
   .map-toolbar-controls{justify-content:flex-start}
-  .event-modal-overlay{padding:8px;align-items:flex-end}
-  .event-modal{max-height:calc(100vh - 16px);border-radius:12px 12px 0 0}
+  .event-modal-overlay{
+    padding:calc(env(safe-area-inset-top,0px) + 28px) 20px 20px;
+    align-items:flex-start;justify-content:center;
+  }
+  .event-modal{
+    width:min(320px,100%);
+    max-height:calc(100vh - 76px);
+    max-height:calc(100dvh - 76px);
+    border-radius:14px;
+  }
   .event-modal-media.is-loading{min-height:170px}
-  .event-modal-media img{max-height:240px}
+  .event-modal-media img{max-height:190px}
   .event-modal-title{font-size:var(--fs-23)}
   .event-modal-body{padding:16px}
   .maplibregl-popup-content{padding:8px}
   .maplibregl-popup-close-button{
-    top:14px;right:14px;z-index:1;width:28px;height:28px;border-radius:8px;
+    top:14px;right:20px;z-index:1;width:28px;height:28px;border-radius:8px;
     background:rgba(var(--surface-raised-rgb),.9);border-color:var(--border);
     box-shadow:0 4px 14px rgba(0,0,0,.2);backdrop-filter:blur(8px);
   }
   .popup-stage-card{width:221px;max-width:calc(100vw - 80px)}
-  .popup-stage{font-size:var(--fs-13);padding-right:34px}
+  .popup-stage{font-size:var(--fs-13);padding-right:46px}
   .popup-line,.popup-event-line{font-size:var(--fs-12)}
   .popup-stage-info{font-size:var(--fs-11);max-height:92px}
   .popup-detail{width:221px;max-width:calc(100vw - 80px)}
