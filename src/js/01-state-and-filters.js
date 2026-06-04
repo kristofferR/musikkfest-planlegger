@@ -98,6 +98,7 @@ let activeView = "program";
 let venueMap = null;
 let mapLoaded = false;
 let venueMapStyle = null;
+let venueMapStyleLoaded = false;
 let venueLayerEventsBound = false;
 let locationRequested = false;
 let locationState = "idle";

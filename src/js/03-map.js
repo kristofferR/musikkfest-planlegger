@@ -26,7 +26,7 @@ function currentMapStyleUrl(){
 }
 
 function venueMapStyleReady(){
-  return Boolean(venueMap)&&mapLoaded&&(!venueMap.isStyleLoaded||venueMap.isStyleLoaded());
+  return Boolean(venueMap)&&mapLoaded&&venueMapStyleLoaded;
 }
 
 function refreshVenueMapOverlays(){
@@ -42,6 +42,7 @@ function syncMapTheme(){
   const next=currentMapStyleUrl();
   if(venueMapStyle===next) return;
   venueMapStyle=next;
+  venueMapStyleLoaded=false;
   venueMap.setStyle(next);
 }
 
@@ -457,9 +458,11 @@ function initVenueMap(){
   venueMap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   venueMap.on("load",()=>{
     mapLoaded=true;
+    venueMapStyleLoaded=true;
     refreshVenueMapOverlays();
   });
   venueMap.on("style.load",()=>{
+    venueMapStyleLoaded=true;
     refreshVenueMapOverlays();
   });
 }
