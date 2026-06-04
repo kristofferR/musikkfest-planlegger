@@ -75,3 +75,7 @@ For nginx-cache på statiske assets:
 Scriptet legger inn en `location ^~ /musikkfest/assets/` med `Cache-Control: public, max-age=31536000, immutable` og `gzip_static on`, tar backup av nginx-configen, kjører `nginx -t` og reloader nginx.
 
 Runtime-data for delbare lister ligger utenfor repoet og utenfor webroot pa serveren, og skal ikke committes. Sett `MUSIKKFEST_STORAGE_DIR` hvis lagringskatalogen ma overstyres.
+
+## Lisens
+
+Lisensiert under [GNU General Public License v3.0 eller senere](LICENSE) (GPL-3.0-or-later).

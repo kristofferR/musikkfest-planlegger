@@ -1,4 +1,5 @@
 {
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "bun run scripts/build.mjs"
   },
