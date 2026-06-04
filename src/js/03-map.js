@@ -7,7 +7,7 @@ const VENUE_POPUP_ZOOM = 14.5;
 
 function venuePopupFlyOffset(){
   const height=venueMap?.getContainer?.().clientHeight||0;
-  const offset=Math.round(Math.min(Math.max(height*.24,80),170));
+  const offset=Math.round(Math.min(Math.max(height*.3,80),210));
   return [0,-offset];
 }
 
