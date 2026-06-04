@@ -372,6 +372,11 @@ function syncPopupDescriptionScroll(){
       const thumb=wrap.querySelector(".popup-detail-scrollbar-thumb");
       syncScrollableDescription(wrap,scroller,thumb,"popup");
     });
+    document.querySelectorAll(".popup-stage-info-wrap").forEach(wrap=>{
+      const scroller=wrap.querySelector(".popup-stage-info");
+      const thumb=wrap.querySelector(".popup-stage-scrollbar-thumb");
+      syncScrollableDescription(wrap,scroller,thumb,"popup-stage");
+    });
   });
 }
 

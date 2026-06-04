@@ -7,7 +7,7 @@ const VENUE_POPUP_ZOOM = 14.5;
 
 function venuePopupFlyOffset(){
   const height=venueMap?.getContainer?.().clientHeight||0;
-  const offset=Math.round(Math.min(Math.max(height*.3,80),210));
+  const offset=Math.round(Math.min(Math.max(height*.36,96),252));
   return [0,-offset];
 }
 
@@ -551,7 +551,7 @@ function stageMapInfoHtml(stage){
   return `<div class="popup-stage-meta">${
     address?`<div class="popup-stage-address"><span class="popup-stage-address-label">Adresse:</span> <a class="popup-stage-address-link" href="${mapsAddressSearchUrl(address)}" target="_blank" rel="noopener">${escapeHtml(address)}</a></div>`:""
   }${
-    info?`<div class="popup-stage-info">${popupTextWithBreaks(info)}</div>`:""
+    info?`<div class="popup-stage-info-wrap"><div class="popup-stage-info">${popupTextWithBreaks(info)}</div><span class="popup-stage-scrollbar" aria-hidden="true"><span class="popup-stage-scrollbar-thumb"></span></span></div>`:""
   }</div>`;
 }
 
@@ -749,6 +749,7 @@ function openStagePopup(stage,{updateUrl=false,replaceUrl=false}={}){
     .setHTML(stagePopupHtml(stage,snapshot))
     .addTo(venueMap);
   labelMapPopupCloseButton();
+  syncPopupDescriptionScroll();
 }
 
 function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
