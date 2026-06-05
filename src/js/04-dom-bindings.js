@@ -36,29 +36,21 @@ infoModal.addEventListener("click",e=>{ if(e.target===infoModal) closeInfoModal(
 
 // ── EVENT DETAILS ──
 const eventModal=document.getElementById("eventModal");
-let eventModalTouchStartY=0;
 document.getElementById("eventModalClose").addEventListener("click",closeEventDetails);
 eventModal.addEventListener("click",e=>{ if(e.target===eventModal) closeEventDetails(); });
-eventModal.addEventListener("touchstart",e=>{
-  eventModalTouchStartY=e.touches?.[0]?.clientY??0;
-},{passive:true});
-eventModal.addEventListener("touchmove",e=>{
-  if(!eventModal.classList.contains("open")) return;
-  const scroller=e.target.closest?.(".event-modal-description");
-  if(!scroller){
-    e.preventDefault();
-    return;
-  }
-  if(scroller.scrollHeight<=scroller.clientHeight){
-    e.preventDefault();
-    return;
-  }
-  const y=e.touches?.[0]?.clientY??eventModalTouchStartY;
-  const movingDown=y>eventModalTouchStartY;
-  const atTop=scroller.scrollTop<=0;
-  const atBottom=scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-1;
-  if((atTop&&movingDown)||(atBottom&&!movingDown)) e.preventDefault();
-},{passive:false});
+
+// ── STAGE SHEET (mobile) ──
+const stageSheet=document.getElementById("stageSheet");
+document.getElementById("stageSheetClose")?.addEventListener("click",()=>closeStageSheet());
+stageSheet?.addEventListener("click",e=>{ if(e.target===stageSheet) closeStageSheet(); });
+
+// iOS-style swipe-to-dismiss for both detail sheets (mobile only).
+attachSheetSwipe(eventModal,eventModal.querySelector(".event-modal"),
+  ()=>eventModal.querySelector(".event-modal-scroll"),()=>closeEventDetails());
+if(stageSheet){
+  attachSheetSwipe(stageSheet,stageSheet.querySelector(".sheet"),
+    ()=>document.getElementById("stageSheetBody"),()=>closeStageSheet());
+}
 function openActiveDetailEventOnMap(){
   if(!activeDetailEvent) return;
   const ev=activeDetailEvent;
@@ -77,6 +69,7 @@ document.getElementById("eventModalFavorite").addEventListener("click",()=>{
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"&&infoModal.classList.contains("open")) closeInfoModal();
   if(e.key==="Escape"&&eventModal.classList.contains("open")) closeEventDetails();
+  if(e.key==="Escape"&&stageSheet?.classList.contains("open")) closeStageSheet();
 });
 document.addEventListener("click",e=>{
   const trigger=e.target.closest?.("[data-event-detail-id]");

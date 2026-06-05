@@ -372,7 +372,9 @@
 
 <div class="event-modal-overlay" id="eventModal" aria-hidden="true">
   <article class="event-modal" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+    <div class="event-modal-grip" aria-hidden="true"></div>
     <button class="event-modal-close" id="eventModalClose" type="button" aria-label="Lukk">×</button>
+    <div class="event-modal-scroll">
     <div class="event-modal-media" id="eventModalMedia">
       <img id="eventModalImage" alt="">
     </div>
@@ -394,6 +396,18 @@
         <a class="event-modal-action" id="eventModalGoogle" target="_blank" rel="noopener noreferrer">Søk på artist</a>
       </div>
     </div>
+    </div>
+  </article>
+</div>
+
+<div class="sheet-overlay" id="stageSheet" aria-hidden="true">
+  <article class="sheet" role="dialog" aria-modal="true" aria-labelledby="stageSheetTitle">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head">
+      <h2 class="sheet-title" id="stageSheetTitle"></h2>
+      <button class="sheet-close" id="stageSheetClose" type="button" aria-label="Lukk">×</button>
+    </header>
+    <div class="sheet-body" id="stageSheetBody"></div>
   </article>
 </div>
 
