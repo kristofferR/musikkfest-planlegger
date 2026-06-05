@@ -1318,19 +1318,15 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   /* — Edge-to-edge map with floating glass controls — */
   .map-view-panel{padding:0}
   .map-filter-bar{display:none}
-  /* Lock the Kart page: the shell fills the screen so the map stays put and big;
-     the page itself doesn't scroll — only the live list scrolls (inside the
-     sidebar), and the map pans on its own. */
-  body.map-active{overflow:hidden}
-  body.map-active .map-shell{
-    gap:0;min-height:0;grid-template-rows:auto minmax(0,1fr);
-    height:calc(100vh - var(--header-h));height:calc(100dvh - var(--header-h));
-  }
+  /* The Kart page scrolls as the normal document (NOT an internal list scroll),
+     so iOS Safari collapses its toolbar and content scrolls behind it. The map is
+     a tall block at the top; the list flows below it. */
+  body.map-active .map-shell{gap:0}
   /* Hard map edge defined by a hairline + a soft drop shadow. z-index lifts the
-     map (and its shadow) above the list so cards tuck cleanly under the edge. */
+     map (and its shadow) above the list below it. */
   .venue-map{
     position:relative;z-index:1;border:0;border-bottom:1px solid var(--border);border-radius:0;
-    height:48dvh;min-height:0;box-shadow:0 5px 12px -5px rgba(0,0,0,.28);
+    height:48svh;min-height:0;box-shadow:0 5px 12px -5px rgba(0,0,0,.28);
     scroll-margin-top:calc(var(--header-h) + var(--tabs-h));
   }
   /* Drop the MapLibre +/- zoom buttons; pinch-to-zoom replaces them. */
@@ -1382,21 +1378,10 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   .map-fab-flag:active{transform:scale(.96)}
   .map-fab-stack.has-active .map-fab-flag{display:inline-flex}
 
-  /* — Live list: cards on the page background, scrolling inside the fixed
-     sidebar, with a subtle fade at the bottom hinting at more below — */
-  .map-sidebar{position:relative;border:0;border-radius:0;background:transparent;overflow:hidden;min-height:0}
-  .map-sidebar::after{
-    content:"";position:absolute;left:0;right:0;bottom:0;height:40px;z-index:2;pointer-events:none;
-    background:linear-gradient(to bottom,rgba(var(--bg-rgb),0),rgba(var(--bg-rgb),.9) 65%,var(--bg));
-  }
+  /* — Live list: cards on the page background; the document scrolls normally — */
+  .map-sidebar{border:0;border-radius:0;background:transparent;overflow:visible;min-height:0}
   .map-toolbar{display:none}
-  .live-scroll{padding:6px 14px 22px;overflow-y:auto;overflow-x:hidden;height:100%}
-
-  /* Same subtle scroll-affordance fade at the bottom of the Program list. */
-  body:not(.map-active):not(.favorites-active)::after{
-    content:"";position:fixed;left:0;right:0;bottom:0;height:36px;z-index:120;pointer-events:none;
-    background:linear-gradient(to bottom,rgba(var(--bg-rgb),0),var(--bg));
-  }
+  .live-scroll{padding:6px 14px 22px}
   .live-section-title{display:none}
   .live-section{margin-bottom:0}
 
