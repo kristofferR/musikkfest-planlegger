@@ -1,0 +1,55 @@
+name: Musikkfest
+options:
+  bundleIdPrefix: no.suboktav
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: nb
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: S5Q742QZEL
+    SWIFT_VERSION: "6.0"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # The pre-build data-sync script reads ../src/data/program.json (a sibling of
+    # ios/ in the monorepo), which the user-script sandbox would deny.
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  Musikkfest:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Musikkfest
+    preBuildScripts:
+      - name: Sync festival data
+        inputFiles:
+          - $(SRCROOT)/../src/data/program.json
+        outputFiles:
+          - $(SRCROOT)/Musikkfest/Resources/program.json
+        script: |
+          cp "${SRCROOT}/../src/data/program.json" "${SRCROOT}/Musikkfest/Resources/program.json"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.suboktav.musikkfest
+        PRODUCT_NAME: Musikkfest
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Musikkfest
+        INFOPLIST_KEY_CFBundleDevelopmentRegion: nb
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Vi bruker posisjonen din for å vise hva som spiller i nærheten og hvor langt det er til scenene."
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_EMIT_LOC_STRINGS: YES
+        ENABLE_PREVIEWS: YES
