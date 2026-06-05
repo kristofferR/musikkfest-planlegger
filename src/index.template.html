@@ -115,6 +115,7 @@
 <!-- FILTER DRAWER -->
 <div class="drawer-overlay" id="drawerOverlay">
   <div class="drawer" id="drawer">
+    <div class="drawer-grip" aria-hidden="true"></div>
     <div class="drawer-handle">
       <span class="drawer-title">Filtre</span>
       <div style="display:flex;align-items:center;gap:14px">
@@ -123,6 +124,13 @@
       </div>
     </div>
     <div class="drawer-body">
+      <div class="drawer-section drawer-search-section">
+        <span class="drawer-section-label">Søk</span>
+        <div class="drawer-search">
+          <span class="drawer-search-icon" aria-hidden="true">🔍</span>
+          <input class="drawer-search-input" id="drawerSearchInput" type="search" placeholder="Artist eller scene" aria-label="Søk i programmet">
+        </div>
+      </div>
       <div class="drawer-section">
         <span class="drawer-section-label">Favoritter</span>
         <button class="favorite-filter-btn" id="favoriteOnlyBtn" type="button" aria-pressed="false">☆ Kun favoritter</button>
@@ -209,6 +217,20 @@
     </div>
     <div class="map-shell">
       <div class="venue-map" id="venueMap" aria-label="Scenekart"></div>
+      <div class="map-fab-stack" id="mapFabStack">
+        <button class="map-fab map-locate-fab" id="mapLocateFab" type="button" aria-label="Vis min posisjon">
+          <svg class="map-fab-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.42 10.45 19.6 3.66c.86-.36 1.74.52 1.38 1.38l-6.79 16.18c-.4.95-1.76.88-2.06-.1l-1.86-6.06a1 1 0 0 0-.66-.66l-6.06-1.86c-.98-.3-1.05-1.66-.1-2.06Z"/></svg>
+        </button>
+        <div class="map-fab-row">
+          <button class="map-fab-flag" id="mapFilterFlag" type="button" aria-label="Nullstill filtre">Filtrert.</button>
+          <button class="map-fab map-filter-fab" id="mapFilterFab" type="button" aria-label="Filtrer">
+            <svg class="map-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></svg>
+          </button>
+        </div>
+        <button class="map-fab map-search-fab" id="mapSearchFab" type="button" aria-label="Søk">
+          <svg class="map-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-3.7-3.7"/></svg>
+        </button>
+      </div>
       <aside class="map-sidebar">
         <div class="map-toolbar">
           <div class="map-toolbar-row">
@@ -222,12 +244,16 @@
           </div>
           <div class="location-status" id="locationStatus">Åpne kartfanen eller trykk for å be om lokasjon.</div>
         </div>
-        <div class="live-scroll">
-          <section class="live-section">
+        <div class="live-scroll" data-live-tab="now">
+          <div class="live-toggle" role="tablist" aria-label="Spiller nå eller snart">
+            <button class="live-toggle-btn active" type="button" data-live-tab="now" role="tab" aria-selected="true">Spiller nå</button>
+            <button class="live-toggle-btn" type="button" data-live-tab="soon" role="tab" aria-selected="false">Spiller snart</button>
+          </div>
+          <section class="live-section live-section--now">
             <div class="live-section-title">Spiller nå <span class="live-count" id="nowCount"></span></div>
             <div class="live-list" id="nowList"></div>
           </section>
-          <section class="live-section">
+          <section class="live-section live-section--soon">
             <div class="live-section-title">Spiller snart <span class="live-count" id="soonCount"></span></div>
             <div class="soon-mode" id="soonMode" role="tablist" aria-label="Sorter spiller snart">
               <button class="soon-mode-btn" type="button" data-soon-mode="upcoming" role="tab" aria-selected="false">Kommende</button>

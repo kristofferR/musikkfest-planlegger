@@ -389,7 +389,19 @@ function createLiveItem(item,type){
 
   const time=document.createElement("div");
   time.className="live-time";
-  time.textContent=ev.time;
+  const timeValue=document.createElement("span");
+  timeValue.className="live-time-value";
+  timeValue.textContent=ev.time;
+  time.appendChild(timeValue);
+  // On mobile "om X min" sits under the time (CSS shows this one, hides the meta
+  // copy) so "spiller snart" rows stay as compact as "spiller nå" rows. Desktop
+  // shows the meta copy instead, so it looks exactly as before.
+  if(type==="soon"&&item.startsInLabel){
+    const startsTime=document.createElement("span");
+    startsTime.className="live-starts live-starts-time";
+    startsTime.textContent=item.startsInLabel;
+    time.appendChild(startsTime);
+  }
 
   const main=document.createElement("div");
   main.className="live-main";
@@ -416,7 +428,7 @@ function createLiveItem(item,type){
 
   if(type==="soon"&&item.startsInLabel){
     const starts=document.createElement("div");
-    starts.className="live-starts";
+    starts.className="live-starts live-starts-meta";
     starts.textContent=item.startsInLabel;
     meta.appendChild(starts);
   }
@@ -469,6 +481,7 @@ function renderLiveList(listId,countId,items,type){
 }
 
 function updateLocationStatus(){
+  syncMapFab();
   const status=document.getElementById("locationStatus");
   const button=document.getElementById("locateBtn");
   button.disabled=locationState==="loading";
@@ -538,6 +551,14 @@ function requestUserLocation(){
     timeout:12000,
     maximumAge:30000,
   });
+}
+
+function locateAndCenter(){
+  // A manual tap on the locate button should always recenter the map on the
+  // user. Recenter on the known position immediately (this also covers preview/
+  // ?location mode, where a fresh request deliberately doesn't fly), then refresh.
+  if(userLocation) updateUserMarker(true);
+  requestUserLocation();
 }
 
 function initVenueMap(){
@@ -825,9 +846,40 @@ function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
   openStagePopup(stage,{updateUrl:false});
 }
 
+// ── MOBILE KART CONTROLS ──
+// Mobile (≤640px) shows one live list at a time behind a segmented toggle and
+// floats glass map controls; desktop ignores all of this (elements are hidden
+// by CSS above the breakpoint and these syncs only touch their state).
+let mobileLiveTab="now";
+function setMobileLiveTab(tab){
+  if(tab!=="now"&&tab!=="soon") return;
+  mobileLiveTab=tab;
+  syncMobileLiveTab();
+}
+function syncMobileLiveTab(){
+  const scroll=document.querySelector(".live-scroll");
+  if(scroll) scroll.dataset.liveTab=mobileLiveTab;
+  document.querySelectorAll(".live-toggle-btn").forEach(button=>{
+    const active=button.dataset.liveTab===mobileLiveTab;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-selected",String(active));
+  });
+}
+function syncMapFab(){
+  const stack=document.getElementById("mapFabStack");
+  if(stack) stack.classList.toggle("has-active",hasActiveFilters());
+  const locate=document.getElementById("mapLocateFab");
+  if(locate){
+    locate.classList.toggle("is-loading",locationState==="loading");
+    locate.classList.toggle("is-active",locationState==="granted");
+    locate.disabled=locationState==="loading";
+  }
+}
+
 function renderMapView(){
   const clock=festivalClock();
   syncSoonModeButtons();
+  syncMobileLiveTab();
   updateFestivalOverModal();
   document.getElementById("mapClock").textContent=clock.label;
   updateLocationStatus();
