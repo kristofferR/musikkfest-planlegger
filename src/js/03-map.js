@@ -921,6 +921,20 @@ function flyToStageOnSheet(stage){
   updateSelectedVenue();
 }
 
+// Size the medium sheet so its top edge sits exactly at the map's bottom — read
+// from the live element so it's correct across PWA / browser chrome / screens.
+function positionStageSheet(){
+  const sheet=document.getElementById("stageSheet");
+  const panel=sheet?.querySelector(".sheet");
+  const map=document.getElementById("venueMap");
+  if(!sheet||!panel||!map||!sheet.classList.contains("open")) return;
+  if(!isMobileViewport()){ panel.style.height="";panel.style.maxHeight="";return; }
+  const mapBottom=map.getBoundingClientRect().bottom;
+  const h=Math.max(160,Math.round(window.innerHeight-mapBottom));
+  panel.style.height=h+"px";
+  panel.style.maxHeight=h+"px";
+}
+
 function openStageSheet(stage,{updateUrl=true,replaceUrl=false}={}){
   const sheet=document.getElementById("stageSheet");
   if(!sheet) return;
@@ -933,6 +947,8 @@ function openStageSheet(stage,{updateUrl=true,replaceUrl=false}={}){
   body.scrollTop=0;
   sheet.classList.add("open");
   sheet.setAttribute("aria-hidden","false");
+  positionStageSheet();
+  requestAnimationFrame(positionStageSheet);
   // Medium-detent sheet: the map stays visible & interactive above it, so we do
   // NOT lock page scroll. Fly to the stage and ring it on the map.
   flyToStageOnSheet(stage);
