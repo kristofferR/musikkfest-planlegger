@@ -50,6 +50,10 @@ attachSheetSwipe(eventModal,eventModal.querySelector(".event-modal"),
 if(stageSheet){
   attachSheetSwipe(stageSheet,stageSheet.querySelector(".sheet"),
     ()=>document.getElementById("stageSheetBody"),()=>closeStageSheet());
+  // Keep the medium sheet's top pinned to the (device-dependent) map bottom.
+  const repositionStageSheet=()=>{ if(typeof positionStageSheet==="function") positionStageSheet(); };
+  window.addEventListener("resize",repositionStageSheet);
+  window.visualViewport?.addEventListener("resize",repositionStageSheet);
 }
 function openActiveDetailEventOnMap(){
   if(!activeDetailEvent) return;
