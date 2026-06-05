@@ -452,9 +452,15 @@ function renderLiveList(listId,countId,items,type){
   if(!items.length){
     const empty=document.createElement("div");
     empty.className="live-empty";
-    empty.textContent=activeFavoritesOnly
-      ? "Ingen favoritter i denne listen."
-      : type==="now"?"Ingen registrerte innslag akkurat nå.":"Ingen kommende innslag i programmet.";
+    if(activeFavoritesOnly){
+      empty.textContent="Ingen favoritter i denne listen.";
+    }else if(type==="now"&&festivalClock().mode==="before"){
+      empty.innerHTML='Festivalen har ikke startet enda, ønsker du å se hvordan det vil se ut underveis i festivalen? <a class="live-empty-link" href="?now=13:46&amp;location=schous-plass#kart">Trykk her</a>';
+    }else{
+      empty.textContent=type==="now"
+        ? "Ingen registrerte innslag akkurat nå."
+        : "Ingen kommende innslag i programmet.";
+    }
     list.appendChild(empty);
     return;
   }
