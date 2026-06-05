@@ -1021,6 +1021,7 @@ function setMobileLiveTab(tab){
   if(tab!=="now"&&tab!=="soon") return;
   mobileLiveTab=tab;
   syncMobileLiveTab();
+  syncLiveEmptyState();
 }
 function syncMobileLiveTab(){
   const scroll=document.querySelector(".live-scroll");
@@ -1030,6 +1031,17 @@ function syncMobileLiveTab(){
     button.classList.toggle("active",active);
     button.setAttribute("aria-selected",String(active));
   });
+}
+// On mobile the Kart tab scrolls as the normal document. When the active live
+// list is empty (only the placeholder shows) we tag the body so CSS can stop
+// the short content from leaving a tall phantom scroll area under the map.
+function syncLiveEmptyState(){
+  const scroll=document.querySelector(".live-scroll");
+  if(!scroll){document.body.classList.remove("live-empty-mobile");return;}
+  const listId=scroll.dataset.liveTab==="soon"?"soonList":"nowList";
+  const list=document.getElementById(listId);
+  const empty=!!list&&!!list.querySelector(".live-empty");
+  document.body.classList.toggle("live-empty-mobile",empty);
 }
 function syncMapFab(){
   const stack=document.getElementById("mapFabStack");
@@ -1069,6 +1081,7 @@ function renderMapView(){
 
   renderLiveList("nowList","nowCount",nowItems,"now");
   renderLiveList("soonList","soonCount",soonItems,"soon");
+  syncLiveEmptyState();
   updateVenueMarkers(snapshots);
   updateUserMarker(false);
   refreshStageSheet();
