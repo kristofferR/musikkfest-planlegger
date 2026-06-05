@@ -1322,11 +1322,13 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
      so iOS Safari collapses its toolbar and content scrolls behind it. The map is
      a tall block at the top; the list flows below it. */
   body.map-active .map-shell{gap:0}
-  /* Hard map edge defined by a hairline + a soft drop shadow. z-index lifts the
-     map (and its shadow) above the list below it. */
+  /* The map is sticky so it stays visible the whole time while the document
+     scrolls naturally (toolbar collapses). The list tucks under its hard edge
+     (a hairline, no shadow); z-index keeps the map above the list. */
   .venue-map{
-    position:relative;z-index:1;border:0;border-bottom:1px solid var(--border);border-radius:0;
-    height:48svh;min-height:0;box-shadow:0 5px 12px -5px rgba(0,0,0,.28);
+    position:sticky;top:var(--header-h);z-index:1;
+    border:0;border-bottom:1px solid var(--border);border-radius:0;
+    height:48svh;min-height:0;
     scroll-margin-top:calc(var(--header-h) + var(--tabs-h));
   }
   /* Drop the MapLibre +/- zoom buttons; pinch-to-zoom replaces them. */
@@ -1344,9 +1346,10 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
     box-shadow:0 6px 18px rgba(0,0,0,.22);
   }
 
+  /* Fixed so the controls stay with the sticky map as the document scrolls. */
   .map-fab-stack{
     display:flex;flex-direction:column;align-items:flex-end;gap:12px;
-    position:absolute;top:calc(var(--tabs-h) + 14px);right:12px;z-index:25;pointer-events:none;
+    position:fixed;top:calc(var(--header-h) + var(--tabs-h) + 14px);right:12px;z-index:25;pointer-events:none;
   }
   .map-fab-stack>*{pointer-events:auto}
   .map-fab-row{display:flex;align-items:center;gap:8px}
@@ -1386,7 +1389,7 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   .live-section{margin-bottom:0}
 
   .live-toggle{
-    display:flex;gap:4px;margin:0 0 8px;padding:3px;position:relative;z-index:3;
+    display:flex;gap:4px;margin:0 0 8px;padding:3px;
     background:var(--surface-muted);border:1px solid var(--border);border-radius:999px;
   }
   .live-toggle-btn{
@@ -1398,7 +1401,7 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   .live-scroll[data-live-tab="now"] .live-section--soon{display:none}
   .live-scroll[data-live-tab="soon"] .live-section--now{display:none}
 
-  .soon-mode{border-radius:999px;padding:3px;margin:0 0 10px;background:var(--surface-muted);position:relative;z-index:3}
+  .soon-mode{border-radius:999px;padding:3px;margin:0 0 10px;background:var(--surface-muted)}
   .soon-mode-btn{border-radius:999px;padding:6px 6px;font-size:var(--fs-12);font-weight:600}
 
   /* "om X min" under the time so "spiller snart" rows are as compact as "nå". */
