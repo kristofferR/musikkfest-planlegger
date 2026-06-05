@@ -1,0 +1,20 @@
+# Xcode / build artifacts
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+*.dSYM.zip
+
+# xcodegen generates the project from project.yml — keep it out of git.
+Musikkfest.xcodeproj/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# TestFlight / App Store Connect API credentials — never commit.
+.testflight-credentials
+
+# macOS
+.DS_Store
