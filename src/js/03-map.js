@@ -177,6 +177,14 @@ function localDateKey(date=new Date()){
   return `${y}-${m}-${d}`;
 }
 
+// The festival's real-time window: from the first concert (10:00) until the
+// post-midnight sets wind down the next morning. before/live/after is decided
+// from the real timestamp, NOT the calendar date — otherwise the small hours
+// of the festival morning (00:00, hours before anything starts) get misread as
+// the post-midnight phase and the app shows concerts as already playing.
+const FESTIVAL_STARTS_AT = new Date(`${EVENT_DATE}T10:00:00${EVENT_TIME_ZONE_OFFSET}`).getTime();
+const FESTIVAL_ENDS_AT = new Date(`${EVENT_NEXT_DATE}T04:00:00${EVENT_TIME_ZONE_OFFSET}`).getTime();
+
 function festivalClock(date=new Date()){
   const override=appUrlParams().get("now");
   if(/^\d{1,2}:\d{2}$/.test(override||"")){
@@ -191,9 +199,9 @@ function festivalClock(date=new Date()){
       };
     }
   }
-  const today=localDateKey(date);
-  if(today<EVENT_DATE) return {mode:"before",min:toMin("09:59"),date,label:`Festivalen starter ${EVENT_DATE_LABEL}`};
-  if(today>EVENT_DATE) return {mode:"after",min:toMin("27:59"),date,label:"Festivaldagen er ferdig"};
+  const now=date.getTime();
+  if(now<FESTIVAL_STARTS_AT) return {mode:"before",min:toMin("09:59"),date,label:`Festivalen starter ${EVENT_DATE_LABEL}`};
+  if(now>=FESTIVAL_ENDS_AT) return {mode:"after",min:toMin("27:59"),date,label:"Festivaldagen er ferdig"};
   const time=`${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
   return {mode:"live",min:toMin(time),date,label:`Kl. ${time}`};
 }
