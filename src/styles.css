@@ -188,7 +188,7 @@ main{padding-top:calc(var(--header-h) + var(--tabs-h) + 8px);padding-bottom:3rem
   padding:10px 0 8px;background:var(--bg);
   box-shadow:0 6px 10px -8px rgba(0,0,0,.25);
 }
-body.chips-visible .program-toolbar{top:calc(var(--header-h) + var(--tabs-h) + 44px)}
+body.chips-visible .program-toolbar{top:calc(var(--header-h) + var(--tabs-h) + 37px)}
 .program-actions{
   display:flex;align-items:center;gap:7px;min-width:0;flex:1;
 }
@@ -983,7 +983,7 @@ body.map-active footer{display:none}
 footer{text-align:center;padding:1.5rem;font-size:var(--fs-11);color:var(--faint);font-family:var(--mono)}
 
 /* when chips are visible, push main down */
-body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 44px + 4px)}
+body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px + 4px)}
 
 :root[data-theme="dark"] .stage-card-header,
 :root[data-theme="dark"] .time-card-header,
