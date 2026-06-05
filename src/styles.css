@@ -1530,10 +1530,13 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   }
 
   /* —— event / artist sheet —— */
+  /* The image + title stay fixed; only the bio scrolls (inner overflow on
+     .event-modal-description), with the actions pinned at the bottom. So this
+     wrapper is a fixed flex column, NOT the scroller. */
   .event-modal-scroll{
     display:flex;flex-direction:column;gap:16px;
-    flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-    padding:6px 18px 40px;
+    flex:1 1 auto;min-height:0;overflow:hidden;
+    padding:6px 18px 20px;
   }
   .event-modal-media{
     display:block;flex:0 0 auto;border:1px solid var(--border);border-radius:20px;
@@ -1542,7 +1545,7 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   .event-modal-media img{width:100%;height:220px;max-height:220px;object-fit:cover;display:block}
   .event-modal-media.is-loading{min-height:220px}
   .event-modal.no-media .event-modal-media{display:none}
-  .event-modal-body{padding:0;display:flex;flex-direction:column;gap:14px}
+  .event-modal-body{padding:0;display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0;overflow:hidden}
   .event-modal-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
   .event-modal-kicker{font-family:var(--mono);font-size:var(--fs-12);color:var(--muted);margin-bottom:6px}
   .event-modal-title{font-size:var(--fs-28);font-weight:700;line-height:1.12;margin:0}
@@ -1557,12 +1560,21 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
     color:#a47706;font-size:var(--fs-25);line-height:1;cursor:pointer;
   }
   .event-modal-favorite.active{background:#f3b924;border-color:#d79d05;color:#1a1814}
-  .event-modal-description-wrap{position:static}
+  .event-modal-description-wrap{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
   .event-modal-description{
-    max-height:none;overflow:visible;font-size:var(--fs-14);line-height:1.5;color:var(--text);
+    flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+    font-size:var(--fs-14);line-height:1.5;color:var(--text);
     display:flex;flex-direction:column;gap:9px;padding:0;
+    scrollbar-width:none;-ms-overflow-style:none;
   }
-  .event-modal-scrollbar,.event-modal-description-wrap::after{display:none}
+  .event-modal-description::-webkit-scrollbar{display:none}
+  /* Custom scrollbar stays hidden on the sheet (the bottom fade hints at more
+     text). Match .is-scrollable specificity so it beats the earlier 640px block. */
+  .event-modal-description-wrap.is-scrollable .event-modal-scrollbar{display:none}
+  .event-modal-description-wrap::after{
+    right:0;height:30px;
+    background:linear-gradient(to bottom,transparent,var(--bg) 84%);
+  }
   .event-modal-empty{font-size:var(--fs-14);color:var(--muted)}
   /* Two actions side by side. */
   .event-modal-actions{display:flex;flex-direction:row;gap:8px;margin-top:2px}

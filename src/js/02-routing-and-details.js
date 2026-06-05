@@ -56,7 +56,7 @@ function isMobileViewport(){
 // threshold to dismiss; otherwise it springs back. Mobile only.
 function attachSheetSwipe(overlay,panel,getScroller,onDismiss){
   if(!overlay||!panel) return;
-  let startY=0,startX=0,dragging=false,decided=false,delta=0,lastY=0,lastT=0,velocity=0,atTop=false;
+  let startY=0,startX=0,dragging=false,decided=false,delta=0,lastY=0,lastT=0,velocity=0,atTop=false,startedInScroller=false;
   const reset=()=>{
     dragging=false;decided=false;delta=0;velocity=0;
     panel.classList.remove("is-dragging");
@@ -69,7 +69,11 @@ function attachSheetSwipe(overlay,panel,getScroller,onDismiss){
     startY=lastY=t.clientY;startX=t.clientX;lastT=e.timeStamp;
     decided=false;dragging=false;delta=0;velocity=0;
     const scroller=getScroller?.();
-    atTop=!scroller||scroller.scrollTop<=0;
+    // Only a drag that STARTS inside the scrollable text is gated by scroll
+    // position. Grabbing the grip, image or header (outside the scroller) can
+    // always dismiss, regardless of how far the text has been scrolled.
+    startedInScroller=!!(scroller&&scroller.contains(e.target));
+    atTop=!startedInScroller||scroller.scrollTop<=0;
   },{passive:true});
   panel.addEventListener("touchmove",e=>{
     if(decided&&!dragging) return;
@@ -83,7 +87,7 @@ function attachSheetSwipe(overlay,panel,getScroller,onDismiss){
       if(!dragging) return;
     }
     const scroller=getScroller?.();
-    if(scroller&&scroller.scrollTop>0){reset();return;}
+    if(startedInScroller&&scroller&&scroller.scrollTop>0){reset();return;}
     delta=Math.max(0,dy);
     velocity=(t.clientY-lastY)/Math.max(1,e.timeStamp-lastT);
     lastY=t.clientY;lastT=e.timeStamp;
