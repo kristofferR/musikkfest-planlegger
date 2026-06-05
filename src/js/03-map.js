@@ -863,6 +863,6 @@ function setView(view,{askLocation=false,updateHash=true}={}){
     renderFavoritesView();
   }else{
     renderChips();
-    if(programViewMode==="time") requestAnimationFrame(()=>updateProgramNowLine());
+    if(programViewMode==="time") requestAnimationFrame(()=>updateProgramNowLine({scroll:true}));
   }
 }
