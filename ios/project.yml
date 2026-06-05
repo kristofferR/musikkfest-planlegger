@@ -43,6 +43,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Musikkfest
         INFOPLIST_KEY_CFBundleDevelopmentRegion: nb
+        # Standard HTTPS only — skips the App Store Connect export-compliance prompt.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Vi bruker posisjonen din for å vise hva som spiller i nærheten og hvor langt det er til scenene."
