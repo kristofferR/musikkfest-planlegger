@@ -198,6 +198,24 @@ function festivalClock(date=new Date()){
   return {mode:"live",min:toMin(time),date,label:`Kl. ${time}`};
 }
 
+// Show the "festival is over" map modal from 06:00 the morning after the
+// festival onward (concerts run past midnight, so we wait until the night
+// is fully done). The ?now= time-travel link disables it so the festival
+// can still be replayed.
+const FESTIVAL_OVER_AT = new Date(`${EVENT_NEXT_DATE}T06:00:00${EVENT_TIME_ZONE_OFFSET}`).getTime();
+function festivalIsOver(){
+  const override=appUrlParams().get("now");
+  if(/^\d{1,2}:\d{2}$/.test(override||"")) return false;
+  return Date.now()>=FESTIVAL_OVER_AT;
+}
+function updateFestivalOverModal(){
+  const el=document.getElementById("festivalOver");
+  if(!el) return;
+  const show=festivalIsOver();
+  el.classList.toggle("open",show);
+  el.setAttribute("aria-hidden",String(!show));
+}
+
 function distanceMeters(from,loc){
   if(!from||!hasCoords(loc)) return null;
   const rad=n=>n*Math.PI/180;
@@ -804,6 +822,7 @@ function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
 function renderMapView(){
   const clock=festivalClock();
   syncSoonModeButtons();
+  updateFestivalOverModal();
   document.getElementById("mapClock").textContent=clock.label;
   updateLocationStatus();
 
