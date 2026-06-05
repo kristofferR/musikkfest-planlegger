@@ -492,7 +492,7 @@ function closeEventDetails({updateUrl=true}={}){
   activeDetailEvent=null;
   if(updateUrl){
     // Returning to an open stage sheet? restore its route rather than the root.
-    if(typeof activeSheetStage!=="undefined"&&activeSheetStage&&document.body.classList.contains("stage-open")){
+    if(typeof activeSheetStage!=="undefined"&&activeSheetStage&&document.getElementById("stageSheet")?.classList.contains("open")){
       setStageRoute(activeSheetStage,{replace:true});
     }else{
       setUrl(rootViewUrl(activeView),{replace:true});

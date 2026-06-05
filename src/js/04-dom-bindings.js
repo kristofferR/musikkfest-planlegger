@@ -39,12 +39,22 @@ const eventModal=document.getElementById("eventModal");
 document.getElementById("eventModalClose").addEventListener("click",closeEventDetails);
 eventModal.addEventListener("click",e=>{ if(e.target===eventModal) closeEventDetails(); });
 
-// ── STAGE PANEL (mobile, in document flow under the map) ──
+// ── STAGE SHEET (mobile) ──
+const stageSheet=document.getElementById("stageSheet");
 document.getElementById("stageSheetClose")?.addEventListener("click",()=>closeStageSheet());
+stageSheet?.addEventListener("click",e=>{ if(e.target===stageSheet) closeStageSheet(); });
 
-// iOS-style swipe-to-dismiss for the artist sheet (mobile only).
+// iOS-style swipe-to-dismiss for both detail sheets (mobile only).
 attachSheetSwipe(eventModal,eventModal.querySelector(".event-modal"),
   ()=>eventModal.querySelector(".event-modal-scroll"),()=>closeEventDetails());
+if(stageSheet){
+  attachSheetSwipe(stageSheet,stageSheet.querySelector(".sheet"),
+    ()=>document.getElementById("stageSheetBody"),()=>closeStageSheet());
+  // Keep the medium sheet's top pinned to the (device-dependent) map bottom.
+  const repositionStageSheet=()=>{ if(typeof positionStageSheet==="function") positionStageSheet(); };
+  window.addEventListener("resize",repositionStageSheet);
+  window.visualViewport?.addEventListener("resize",repositionStageSheet);
+}
 function openActiveDetailEventOnMap(){
   if(!activeDetailEvent) return;
   const ev=activeDetailEvent;
@@ -63,7 +73,7 @@ document.getElementById("eventModalFavorite").addEventListener("click",()=>{
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"&&infoModal.classList.contains("open")) closeInfoModal();
   if(e.key==="Escape"&&eventModal.classList.contains("open")) closeEventDetails();
-  if(e.key==="Escape"&&document.body.classList.contains("stage-open")) closeStageSheet();
+  if(e.key==="Escape"&&stageSheet?.classList.contains("open")) closeStageSheet();
 });
 document.addEventListener("click",e=>{
   const trigger=e.target.closest?.("[data-event-detail-id]");

@@ -1464,30 +1464,36 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
 }
 
 /* ============================================================
-   iOS-style detail UIs — mobile (≤640px) only.
-   - Artist sheet: the event modal becomes a full bottom sheet (stacks, swipe).
-   - Stage panel: lives in the document flow under the sticky map so the PAGE
-     scrolls (iOS collapses its toolbar, the panel runs to the screen bottom).
-   Desktop keeps the centered modal + the map info-boxes.
+   iOS-style detail sheets (artist + stage) — mobile (≤640px) only.
+   Desktop keeps the centered event modal and the map info-boxes; these
+   rules turn the event modal into a full-height bottom sheet and add the
+   stage sheet, both with a grab handle and swipe-to-dismiss.
    ============================================================ */
 .event-modal-grip,.sheet-grip{display:none}
+.sheet-overlay{display:none}
 .event-modal-scroll{display:contents}
-.stage-scroll{display:none}
 
 @media (max-width:640px){
-  /* —— artist / event sheet (bottom-sheet modal) —— */
-  .event-modal-overlay{
+  /* —— shared sheet chrome —— */
+  .event-modal-overlay,.sheet-overlay{
     display:flex;align-items:flex-end;justify-content:center;
-    position:fixed;inset:0;z-index:530;padding:0;
+    position:fixed;inset:0;z-index:520;padding:0;
     background:rgba(0,0,0,calc(.5*(1 - var(--sheet-drag,0))));
     visibility:hidden;opacity:0;pointer-events:none;
     transition:opacity .28s ease,visibility .28s ease,background .12s linear;
     overscroll-behavior:contain;
   }
-  /* align-items here (not just the base rule) so it beats the desktop
-     .event-modal-overlay.open{align-items:center} — the sheet anchors to bottom. */
-  .event-modal-overlay.open{visibility:visible;opacity:1;pointer-events:auto;align-items:flex-end}
-  .event-modal{
+  /* align-items here (not just on the base rule) so it beats the desktop
+     .event-modal-overlay.open{align-items:center} — sheets anchor to the bottom. */
+  .event-modal-overlay.open,.sheet-overlay.open{visibility:visible;opacity:1;pointer-events:auto;align-items:flex-end}
+  /* The artist sheet stacks above the stage sheet it was opened from. */
+  .event-modal-overlay{z-index:530}
+  /* Stage sheet = iOS medium detent: no dark backdrop, the map stays visible and
+     interactive above it (only the panel catches touches), medium height. */
+  .sheet-overlay{background:transparent}
+  .sheet-overlay.open{pointer-events:none}
+  .sheet-overlay .sheet{pointer-events:auto;max-height:64dvh}
+  .event-modal,.sheet{
     position:relative;width:100%;max-width:600px;margin:0;
     height:auto;max-height:94dvh;
     border:0;border-radius:24px 24px 0 0;
@@ -1500,13 +1506,13 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
     transform:translateY(100%);
     transition:transform .34s cubic-bezier(.32,.72,0,1);
   }
-  .event-modal-overlay.open .event-modal{transform:translateY(0)}
-  .event-modal.is-dragging{transition:none}
-  .event-modal-grip{
+  .event-modal-overlay.open .event-modal,.sheet-overlay.open .sheet{transform:translateY(0)}
+  .event-modal.is-dragging,.sheet.is-dragging{transition:none}
+  .event-modal-grip,.sheet-grip{
     display:block;flex:0 0 auto;width:38px;height:5px;border-radius:999px;
     background:var(--faint);opacity:.5;margin:9px auto 2px;
   }
-  .event-modal-close{
+  .event-modal-close,.sheet-close{
     position:absolute;top:12px;right:14px;z-index:6;
     width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
     border:1px solid var(--border);border-radius:999px;
@@ -1514,6 +1520,8 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
     font-size:var(--fs-22);line-height:1;cursor:pointer;padding:0;
   }
+
+  /* —— event / artist sheet —— */
   .event-modal-scroll{
     display:flex;flex-direction:column;gap:16px;
     flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
@@ -1555,34 +1563,16 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   }
   .event-modal-action.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
 
-  /* —— stage panel: in the document flow under the sticky map —— */
-  body.stage-open .map-sidebar .live-scroll{display:none}
-  body.stage-open .stage-scroll{
-    display:block;position:relative;z-index:2;background:var(--bg);
-    min-height:calc(100svh - var(--header-h) - 48svh);
-  }
-  .stage-scroll .sheet-head{
-    position:sticky;top:calc(var(--header-h) + 48svh);z-index:3;
-    background:var(--bg);border-radius:22px 22px 0 0;
-    padding:0 0 8px;box-shadow:0 8px 10px -8px rgba(0,0,0,.12);
-  }
-  .stage-scroll .sheet-grip{
-    display:block;width:38px;height:5px;border-radius:999px;
-    background:var(--faint);opacity:.5;margin:9px auto 7px;
-  }
-  .sheet-head-row{display:flex;align-items:center;gap:10px;padding:0 18px}
+  /* —— stage sheet —— */
+  .sheet-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:4px 56px 10px 18px}
   .sheet-title{
-    flex:1;min-width:0;font-size:var(--fs-20);font-weight:600;line-height:1.15;margin:0;
+    font-size:var(--fs-20);font-weight:600;line-height:1.15;margin:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .sheet-close{
-    flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
-    border:1px solid var(--border);border-radius:999px;background:var(--surface-muted);color:var(--text);
-    font-size:var(--fs-22);line-height:1;cursor:pointer;padding:0;
-  }
-  .stage-scroll .sheet-body{
+  .sheet-body{
+    flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
     display:flex;flex-direction:column;gap:16px;
-    padding:8px 18px calc(env(safe-area-inset-bottom,0px) + 40px);
+    padding:2px 18px calc(env(safe-area-inset-bottom,0px) + 32px);
   }
   .sheet-nav{
     display:flex;align-items:center;gap:12px;text-decoration:none;
