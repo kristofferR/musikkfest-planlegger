@@ -106,10 +106,15 @@ document.addEventListener("click",e=>{
 });
 
 // ── GENRE PILLS ──
+// Solid per-genre colours (the web dark-mode badge colour) so the iOS filter
+// sheet can tint a selected genre chip with its own colour. Only consumed by
+// the mobile Kart sheet via the --genre-tint custom property; desktop ignores it.
+const GENRE_TINT={Rock:"#b73a1f",Pop:"#6750d8",Elektronika:"#1769c2",HipHop:"#b96112",Verdensmusikk:"#bd3578",Reggae:"#268249",Jazz:"#087f68",Blues:"#235fb0",Folk:"#a9561d",Punk:"#c92d3f",Metal:"#4b4742",Vise:"#876f09",Kor:"#6147bf",Country:"#aa5422",Singer:"#9340b2",Korps:"#64737b",RnB:"#7643a3",Stoy:"#5c554e",Annet:"#68615a"};
 const genreContainer = document.getElementById("genrePills");
 Object.keys(GENRE_LABELS).filter(g=>usedGenres.includes(g)).forEach(g=>{
   const b=document.createElement("button");
   b.type="button"; b.className="dpill"; b.textContent=GENRE_LABELS[g]; b.dataset.g=g;
+  if(GENRE_TINT[g]) b.style.setProperty("--genre-tint",GENRE_TINT[g]);
   b.onclick=()=>{
     if(!activeGenresExplicit){
       activeGenres=new Set([g]);
@@ -306,6 +311,25 @@ document.querySelectorAll(".view-tab").forEach(tab=>{
   });
 });
 document.getElementById("locateBtn").addEventListener("click",requestUserLocation);
+// Mobile Kart: floating glass controls + "spiller nå/snart" segmented toggle.
+document.getElementById("mapLocateFab")?.addEventListener("click",locateAndCenter);
+document.getElementById("mapFilterFab")?.addEventListener("click",()=>overlay.classList.add("open"));
+// Tapping the "Filtrert." flag clears all active filters.
+document.getElementById("mapFilterFlag")?.addEventListener("click",clearMapFilters);
+// "Søk" is a shortcut into the same filter sheet, focused on its search field.
+document.getElementById("mapSearchFab")?.addEventListener("click",()=>{
+  overlay.classList.add("open");
+  requestAnimationFrame(()=>document.getElementById("drawerSearchInput")?.focus());
+});
+document.getElementById("drawerSearchInput")?.addEventListener("input",e=>{
+  searchQuery=e.target.value;
+  const main=document.getElementById("searchInput"); if(main) main.value=searchQuery;
+  const mapSearch=document.getElementById("mapSearchFilter"); if(mapSearch) mapSearch.value=searchQuery;
+  render();
+});
+document.querySelectorAll(".live-toggle-btn").forEach(button=>{
+  button.addEventListener("click",()=>setMobileLiveTab(button.dataset.liveTab));
+});
 function viewFromHash(){
   const hash=window.location.hash.split("?")[0];
   if(hash==="#kart") return "map";

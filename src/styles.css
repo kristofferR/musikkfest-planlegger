@@ -1,6 +1,6 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f3ee;--surface:#fff;--surface-rgb:255,255,255;--border:rgba(0,0,0,0.09);
+  --bg:#f5f3ee;--bg-rgb:245,243,238;--surface:#fff;--surface-rgb:255,255,255;--border:rgba(0,0,0,0.09);
   --surface-soft:#faf9f7;--surface-warm:#fffaf5;--surface-muted:#ece8df;--surface-raised:#fff;
   --surface-raised-rgb:255,255,255;
   --text:#1a1814;--muted:#6b6760;--faint:#a8a49e;
@@ -14,7 +14,7 @@
   --fs-22:22px;--fs-23:23px;--fs-25:25px;--fs-28:28px;--fs-31:31px;
 }
 :root[data-theme="dark"]{
-  --bg:#11100d;--surface:#1d1a16;--surface-rgb:29,26,22;--border:rgba(255,255,255,.1);
+  --bg:#11100d;--bg-rgb:17,16,13;--surface:#1d1a16;--surface-rgb:29,26,22;--border:rgba(255,255,255,.1);
   --surface-soft:#24211b;--surface-warm:#211c16;--surface-muted:#302b24;--surface-raised:#29251f;
   --surface-raised-rgb:41,37,31;
   --text:#f2eee6;--muted:#b8afa1;--faint:#7f776c;
@@ -1300,4 +1300,177 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   .popup-detail-description-wrap::after{right:12px;height:24px}
   .popup-detail-actions{gap:5px;margin-top:8px}
   .popup-detail-action{font-size:var(--fs-11);padding:5px 8px}
+}
+
+/* ============================================================
+   iOS-style mobile Kart (map) view — ≤640px only.
+   Desktop is untouched: the new controls are display:none above the
+   breakpoint, and every visual rule lives inside the media query.
+   ============================================================ */
+.map-fab-stack{display:none}
+.live-toggle{display:none}
+.drawer-grip{display:none}
+.drawer-search-section{display:none}
+.live-starts-time{display:none}
+@keyframes map-fab-spin{to{transform:rotate(360deg)}}
+
+@media (max-width:640px){
+  /* — Edge-to-edge map with floating glass controls — */
+  .map-view-panel{padding:0}
+  .map-filter-bar{display:none}
+  /* Lock the Kart page: the shell fills the screen so the map stays put and big;
+     the page itself doesn't scroll — only the live list scrolls (inside the
+     sidebar), and the map pans on its own. */
+  body.map-active{overflow:hidden}
+  body.map-active .map-shell{
+    gap:0;min-height:0;grid-template-rows:auto minmax(0,1fr);
+    height:calc(100vh - var(--header-h));height:calc(100dvh - var(--header-h));
+  }
+  /* Hard map edge defined by a hairline + a soft drop shadow. z-index lifts the
+     map (and its shadow) above the list so cards tuck cleanly under the edge. */
+  .venue-map{
+    position:relative;z-index:1;border:0;border-bottom:1px solid var(--border);border-radius:0;
+    height:48dvh;min-height:0;box-shadow:0 5px 12px -5px rgba(0,0,0,.28);
+    scroll-margin-top:calc(var(--header-h) + var(--tabs-h));
+  }
+  /* Drop the MapLibre +/- zoom buttons; pinch-to-zoom replaces them. */
+  .maplibregl-ctrl-top-right{display:none}
+
+  /* The tab group keeps its exact position, but the map fills the background
+     behind it: slide the map up under the now-transparent tab bar and turn the
+     Program/Kart/Favoritter group into a glass pill floating over the map. */
+  body.map-active main{padding-top:var(--header-h)}
+  body.map-active .view-tabs{background:transparent;border-bottom:0;pointer-events:none}
+  /* Keep the group's original warm colour (var(--surface-muted)); only let it
+     float over the map (the strip around it is the transparent map background). */
+  body.map-active .view-tab-group{
+    pointer-events:auto;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
+  }
+
+  .map-fab-stack{
+    display:flex;flex-direction:column;align-items:flex-end;gap:12px;
+    position:absolute;top:calc(var(--tabs-h) + 14px);right:12px;z-index:25;pointer-events:none;
+  }
+  .map-fab-stack>*{pointer-events:auto}
+  .map-fab-row{display:flex;align-items:center;gap:8px}
+  .map-fab{
+    position:relative;width:46px;height:46px;border-radius:50%;flex:0 0 auto;
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);color:var(--accent2);cursor:pointer;
+    background:rgba(var(--surface-rgb),.82);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+    transition:transform .12s,background .14s,color .14s,border-color .14s;
+  }
+  .map-fab:active{transform:scale(.93)}
+  .map-fab-icon{width:23px;height:23px;display:block}
+  .map-locate-fab.is-loading .map-fab-icon{opacity:0}
+  .map-locate-fab.is-loading::after{
+    content:"";position:absolute;width:18px;height:18px;border-radius:50%;
+    border:2px solid rgba(42,109,212,.32);border-top-color:var(--accent2);
+    animation:map-fab-spin .7s linear infinite;
+  }
+  .map-fab-stack.has-active .map-filter-fab{background:var(--accent);border-color:var(--accent);color:#fff}
+  .map-fab-flag{
+    display:none;align-items:center;white-space:nowrap;cursor:pointer;
+    font-family:var(--font);font-size:var(--fs-13);font-weight:600;color:var(--accent);
+    background:rgba(var(--surface-rgb),.82);border:1px solid var(--border);border-radius:999px;
+    padding:7px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  }
+  .map-fab-flag:active{transform:scale(.96)}
+  .map-fab-stack.has-active .map-fab-flag{display:inline-flex}
+
+  /* — Live list: cards on the page background, scrolling inside the fixed
+     sidebar, with a subtle fade at the bottom hinting at more below — */
+  .map-sidebar{position:relative;border:0;border-radius:0;background:transparent;overflow:hidden;min-height:0}
+  .map-sidebar::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:40px;z-index:2;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(var(--bg-rgb),0),rgba(var(--bg-rgb),.9) 65%,var(--bg));
+  }
+  .map-toolbar{display:none}
+  .live-scroll{padding:6px 14px 22px;overflow-y:auto;overflow-x:hidden;height:100%}
+
+  /* Same subtle scroll-affordance fade at the bottom of the Program list. */
+  body:not(.map-active):not(.favorites-active)::after{
+    content:"";position:fixed;left:0;right:0;bottom:0;height:36px;z-index:120;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(var(--bg-rgb),0),var(--bg));
+  }
+  .live-section-title{display:none}
+  .live-section{margin-bottom:0}
+
+  .live-toggle{
+    display:flex;gap:4px;margin:0 0 8px;padding:3px;position:relative;z-index:3;
+    background:var(--surface-muted);border:1px solid var(--border);border-radius:999px;
+  }
+  .live-toggle-btn{
+    flex:1;border:0;border-radius:999px;background:transparent;cursor:pointer;
+    font-family:var(--font);font-size:var(--fs-12);font-weight:600;color:var(--muted);
+    padding:6px 8px;transition:color .15s;
+  }
+  .live-toggle-btn.active{background:var(--text);color:var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .live-scroll[data-live-tab="now"] .live-section--soon{display:none}
+  .live-scroll[data-live-tab="soon"] .live-section--now{display:none}
+
+  .soon-mode{border-radius:999px;padding:3px;margin:0 0 10px;background:var(--surface-muted);position:relative;z-index:3}
+  .soon-mode-btn{border-radius:999px;padding:6px 6px;font-size:var(--fs-12);font-weight:600}
+
+  /* "om X min" under the time so "spiller snart" rows are as compact as "nå". */
+  .live-time{display:flex;flex-direction:column;gap:1px;align-items:flex-start;justify-content:center}
+  .live-starts-time{display:block}
+  .live-starts-meta{display:none}
+
+  /* Each performance row keeps its original styling and text sizes — only the
+     surrounding layout (toggle, map, glass controls) is iOS-ified. */
+
+  /* — Filter as an iOS bottom sheet (only on the Kart tab) — */
+  body.map-active .drawer{
+    background:
+      radial-gradient(130% 90% at 6% -10%, rgba(212,82,42,.14), transparent 55%),
+      radial-gradient(130% 90% at 100% -12%, rgba(243,185,36,.13), transparent 52%),
+      var(--bg);
+    border:1px solid var(--border);border-bottom:0;border-radius:24px 24px 0 0;
+    box-shadow:0 -16px 50px rgba(0,0,0,.26);max-height:90vh;max-height:90dvh;
+  }
+  body.map-active .drawer-grip{
+    display:block;width:38px;height:5px;border-radius:999px;
+    background:var(--faint);opacity:.5;margin:9px auto 2px;flex:0 0 auto;
+  }
+  body.map-active .drawer-handle{padding:10px 18px}
+  body.map-active .drawer-title{color:var(--text);font-size:var(--fs-18);font-weight:600}
+  body.map-active .drawer-clear-all{color:var(--accent2);font-size:var(--fs-13);font-weight:500}
+  body.map-active .drawer-close{
+    width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
+    border-radius:999px;border:1px solid var(--border);background:var(--surface-muted);
+    color:var(--muted);font-size:var(--fs-20);
+  }
+  body.map-active .drawer-body{padding:6px 18px 28px}
+  body.map-active .drawer-section-label{color:var(--muted);font-size:var(--fs-11)}
+  body.map-active .drawer-search-section{display:block}
+  body.map-active .drawer-search{position:relative}
+  body.map-active .drawer-search-icon{
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    font-size:var(--fs-13);opacity:.55;pointer-events:none;
+  }
+  body.map-active .drawer-search-input{
+    width:100%;height:46px;border-radius:14px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);
+    font-family:var(--font);font-size:var(--fs-15);padding:0 12px 0 38px;outline:none;
+  }
+  body.map-active .drawer-search-input::placeholder{color:var(--faint)}
+  body.map-active .drawer-search-input:focus{border-color:rgba(42,109,212,.45);background:var(--surface-raised)}
+  body.map-active .pills{gap:8px}
+  body.map-active .dpill{
+    font-size:var(--fs-14);font-weight:500;padding:8px 14px;
+    background:var(--surface-muted);border:1px solid var(--border);color:var(--muted);
+  }
+  body.map-active .dpill.ag{background:var(--genre-tint,var(--accent));border-color:var(--genre-tint,var(--accent));color:#fff}
+  body.map-active .dpill.as{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  body.map-active .drawer-section .favorite-filter-btn{
+    width:100%;justify-content:flex-start;gap:10px;padding:14px;border-radius:16px;
+    background:var(--surface);border:1px solid var(--border);color:var(--text);
+    font-size:var(--fs-15);font-weight:500;
+  }
+  body.map-active .favorite-filter-btn.active{background:#f3b924;border-color:#e0ac15;color:#1a1814}
 }

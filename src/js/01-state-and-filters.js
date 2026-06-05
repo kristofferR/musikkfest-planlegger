@@ -666,6 +666,8 @@ function syncMapCheckboxes(){
 
 function syncMapFilterBar(){
   document.getElementById("mapSearchFilter").value=searchQuery;
+  const drawerSearch=document.getElementById("drawerSearchInput");
+  if(drawerSearch&&drawerSearch!==document.activeElement) drawerSearch.value=searchQuery;
   document.getElementById("mapGenreSummary").textContent=mapGenreSummary();
   document.getElementById("mapStageSummary").textContent=mapStageSummary();
   syncMapCheckboxes();
