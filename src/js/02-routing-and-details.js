@@ -47,6 +47,63 @@ function unlockPageScroll(owner){
   pageScrollLockState=null;
 }
 
+function isMobileViewport(){
+  return window.matchMedia("(max-width:640px)").matches;
+}
+
+// iOS-style swipe-to-dismiss for a bottom sheet. Drag the panel down (only when
+// its scroller is already at the top) and release past a distance/velocity
+// threshold to dismiss; otherwise it springs back. Mobile only.
+function attachSheetSwipe(overlay,panel,getScroller,onDismiss){
+  if(!overlay||!panel) return;
+  let startY=0,startX=0,dragging=false,decided=false,delta=0,lastY=0,lastT=0,velocity=0,atTop=false;
+  const reset=()=>{
+    dragging=false;decided=false;delta=0;velocity=0;
+    panel.classList.remove("is-dragging");
+    panel.style.transform="";
+    overlay.style.removeProperty("--sheet-drag");
+  };
+  panel.addEventListener("touchstart",e=>{
+    if(!isMobileViewport()||e.touches.length!==1){decided=true;dragging=false;return;}
+    const t=e.touches[0];
+    startY=lastY=t.clientY;startX=t.clientX;lastT=e.timeStamp;
+    decided=false;dragging=false;delta=0;velocity=0;
+    const scroller=getScroller?.();
+    atTop=!scroller||scroller.scrollTop<=0;
+  },{passive:true});
+  panel.addEventListener("touchmove",e=>{
+    if(decided&&!dragging) return;
+    if(e.touches.length!==1) return;
+    const t=e.touches[0];
+    const dy=t.clientY-startY,dx=t.clientX-startX;
+    if(!decided){
+      if(Math.abs(dy)<4&&Math.abs(dx)<4) return;
+      if(atTop&&dy>0&&Math.abs(dy)>Math.abs(dx)){dragging=true;panel.classList.add("is-dragging");}
+      decided=true;
+      if(!dragging) return;
+    }
+    const scroller=getScroller?.();
+    if(scroller&&scroller.scrollTop>0){reset();return;}
+    delta=Math.max(0,dy);
+    velocity=(t.clientY-lastY)/Math.max(1,e.timeStamp-lastT);
+    lastY=t.clientY;lastT=e.timeStamp;
+    panel.style.transform=`translateY(${delta}px)`;
+    overlay.style.setProperty("--sheet-drag",String(Math.min(1,delta/420)));
+    e.preventDefault();
+  },{passive:false});
+  const end=()=>{
+    if(!dragging){reset();return;}
+    const dismiss=delta>120||velocity>0.55;
+    panel.classList.remove("is-dragging");
+    panel.style.transform="";
+    overlay.style.removeProperty("--sheet-drag");
+    if(dismiss) onDismiss();
+    dragging=false;decided=false;delta=0;velocity=0;
+  };
+  panel.addEventListener("touchend",end);
+  panel.addEventListener("touchcancel",end);
+}
+
 function currentAppBasePath(){
   const path=window.location.pathname;
   const index=path.indexOf(APP_ROUTE_PREFIX);
@@ -399,6 +456,11 @@ function labelMapPopupCloseButton(){
 }
 
 function openEventMapPopup(ev,{updateUrl=true,replaceUrl=false}={}){
+  // On mobile we drop the map info-box and show the full-height artist sheet.
+  if(isMobileViewport()){
+    openEventDetails(ev,{updateUrl,replaceUrl});
+    return;
+  }
   const loc=STAGE_LOCATIONS[ev.stage];
   if(!venueMap||!hasCoords(loc)){
     openEventDetails(ev,{updateUrl,replaceUrl});
@@ -429,8 +491,13 @@ function closeEventDetails({updateUrl=true}={}){
   unlockPageScroll(modal);
   activeDetailEvent=null;
   if(updateUrl){
-    setUrl(rootViewUrl(activeView),{replace:true});
-    resetMeta();
+    // Returning to an open stage sheet? restore its route rather than the root.
+    if(typeof activeSheetStage!=="undefined"&&activeSheetStage&&document.getElementById("stageSheet")?.classList.contains("open")){
+      setStageRoute(activeSheetStage,{replace:true});
+    }else{
+      setUrl(rootViewUrl(activeView),{replace:true});
+      resetMeta();
+    }
   }
 }
 

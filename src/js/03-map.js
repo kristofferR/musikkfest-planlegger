@@ -680,6 +680,24 @@ function addVenueLayers(){
     });
   }
 
+  // Ring drawn around the stage whose sheet is open (iOS "selected venue").
+  if(!venueMap.getLayer("venue-selected")){
+    venueMap.addLayer({
+      id:"venue-selected",
+      type:"circle",
+      source:"venues",
+      filter:["==",["get","stage"],"__nostage__"],
+      paint:{
+        "circle-radius":14,
+        "circle-color":"rgba(0,0,0,0)",
+        "circle-stroke-color":"#d4522a",
+        "circle-stroke-width":3.5,
+        "circle-stroke-opacity":0.95,
+      },
+    });
+  }
+  updateSelectedVenue();
+
   if(!venueLayerEventsBound){
     venueMap.on("click","venue-dots",e=>{
       const stage=e.features?.[0]?.properties?.stage;
@@ -817,7 +835,135 @@ function updateUserMarker(fly=true){
   if(fly) venueMap.flyTo({center:lngLat,zoom:12.7,speed:.8,essential:true});
 }
 
+// ── STAGE SHEET (mobile) ──
+// Full-height iOS-style bottom sheet replacing the map info-box on mobile.
+let activeSheetStage=null;
+
+function formatStageDistanceWalk(meters){
+  if(!Number.isFinite(meters)) return "";
+  const distStr=meters<950?`${Math.round(meters/10)*10} m`:`${(meters/1000).toFixed(1)} km`;
+  const walkMin=Math.round(meters/80);
+  return walkMin<=1?`${distStr} unna`:`${distStr} · ~${walkMin} min å gå`;
+}
+
+function stageEventGroups(stage,clock=festivalClock()){
+  const events=(stageEvents.get(stage)||[]).slice().sort((a,b)=>a.min-b.min);
+  const now=[],coming=[],done=[];
+  events.forEach((ev,index)=>{
+    if(clock.mode==="before"){coming.push(ev);return;}
+    if(clock.mode==="after"){done.push(ev);return;}
+    const nextStart=events[index+1]?.min??ev.min+SET_DURATION_MIN;
+    const inferredEnd=Math.min(nextStart,ev.min+SET_DURATION_MIN);
+    if(clock.min>=ev.min&&clock.min<inferredEnd) now.push(ev);
+    else if(ev.min>clock.min) coming.push(ev);
+    else done.push(ev);
+  });
+  return {now,coming,done};
+}
+
+const SHEET_WALK_ICON='<svg class="sheet-walk-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 5.5a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2Zm-4 16.5 1.5-6.6-1.7-1.6L8 17.4l-1.9-.6 2-5.4c.3-.8 1-1.4 1.9-1.5l2.8-.3c.7-.1 1.4.2 1.8.8l1 1.4c.5.7 1.3 1.1 2.2 1.1v1.9c-1.4 0-2.7-.6-3.6-1.6l-.5 2.5 1.8 1.7L18.6 22h-2.1l-2-4.6-1.8-1.4L11.5 22Z"/></svg>';
+
+function stageSheetRowHtml(ev){
+  return `<button class="sheet-row" type="button" data-event-detail-id="${escapeHtml(ev.id)}" aria-label="Vis ${escapeHtml(ev.artist)}">`
+    +`<span class="sheet-row-time">${escapeHtml(ev.time)}</span>`
+    +`<span class="sheet-row-artist">${escapeHtml(ev.artist)}</span>`
+    +`<span class="gbadge g-${escapeHtml(ev.genre)}">${escapeHtml(GENRE_LABELS[ev.genre]||ev.genre)}</span>`
+    +`</button>`;
+}
+
+function stageSheetGroupHtml(title,events,{accent=false,dimmed=false}={}){
+  if(!events.length) return "";
+  return `<section class="sheet-group${accent?" accent":""}${dimmed?" dimmed":""}">`
+    +`<div class="sheet-group-title">${escapeHtml(title)}</div>`
+    +`<div class="sheet-group-list">${events.map(stageSheetRowHtml).join("")}</div>`
+    +`</section>`;
+}
+
+function stageSheetHtml(stage){
+  const clock=festivalClock();
+  const loc=STAGE_LOCATIONS[stage]||{};
+  const meta=STAGE_MAP_INFO[stage]||{};
+  const address=String(meta.address||loc.query||"").trim();
+  const info=String(meta.info||"").trim();
+  const distance=distanceMeters(userLocation,loc);
+  const groups=stageEventGroups(stage,clock);
+  const navHref=hasCoords(loc)?directionsUrl(loc):(address?mapsAddressSearchUrl(address):"");
+  const pinIcon='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.05 6.16 12.1 6.42 12.4a.76.76 0 0 0 1.16 0C13.84 21.1 20 14.05 20 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+  const arrowIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+  const navCard=navHref?`<a class="sheet-nav" href="${escapeHtml(navHref)}" target="_blank" rel="noopener">`
+    +`<span class="sheet-nav-icon">${pinIcon}</span>`
+    +`<span class="sheet-nav-main"><span class="sheet-nav-address">${escapeHtml(address||"Åpne i kart")}</span><span class="sheet-nav-sub">Naviger hit</span></span>`
+    +`<span class="sheet-nav-arrow">${arrowIcon}</span></a>`:"";
+  const distHtml=Number.isFinite(distance)?`<div class="sheet-distance">${SHEET_WALK_ICON}<span>${escapeHtml(formatStageDistanceWalk(distance))}</span></div>`:"";
+  const infoHtml=info?`<p class="sheet-info">${popupTextWithBreaks(info)}</p>`:"";
+  const comingTitle=(!groups.now.length&&!groups.done.length)?"Program":"Kommende";
+  const groupsHtml=stageSheetGroupHtml("Spiller nå",groups.now,{accent:true})
+    +stageSheetGroupHtml(comingTitle,groups.coming)
+    +stageSheetGroupHtml("Ferdig",groups.done,{dimmed:true});
+  const emptyHtml=(!groups.now.length&&!groups.coming.length&&!groups.done.length)
+    ?`<div class="sheet-empty">Ingen program registrert for denne scenen.</div>`:"";
+  return navCard+distHtml+infoHtml+groupsHtml+emptyHtml;
+}
+
+function updateSelectedVenue(){
+  if(venueMap?.getLayer?.("venue-selected")){
+    venueMap.setFilter("venue-selected",["==",["get","stage"],activeSheetStage||"__nostage__"]);
+  }
+}
+
+// Centre the selected stage in the strip of map left visible above the medium
+// sheet, then ring it.
+function flyToStageOnSheet(stage){
+  const loc=STAGE_LOCATIONS[stage];
+  if(!venueMap||!hasCoords(loc)) return;
+  if(!mapLoaded){ venueMap.once("load",()=>flyToStageOnSheet(stage)); return; }
+  venueMap.flyTo({center:[loc.lng,loc.lat],zoom:14.5,offset:[0,-40],speed:.9,essential:true});
+  updateSelectedVenue();
+}
+
+function openStageSheet(stage,{updateUrl=true,replaceUrl=false}={}){
+  const sheet=document.getElementById("stageSheet");
+  if(!sheet) return;
+  if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
+  else setStageMeta(stage);
+  activeSheetStage=stage;
+  document.getElementById("stageSheetTitle").textContent=stage;
+  const body=document.getElementById("stageSheetBody");
+  body.innerHTML=stageSheetHtml(stage);
+  body.scrollTop=0;
+  sheet.classList.add("open");
+  sheet.setAttribute("aria-hidden","false");
+  // Medium-detent sheet: the map stays visible & interactive above it, so we do
+  // NOT lock page scroll. Fly to the stage and ring it on the map.
+  flyToStageOnSheet(stage);
+  document.getElementById("stageSheetClose").focus({preventScroll:true});
+}
+
+function refreshStageSheet(){
+  const sheet=document.getElementById("stageSheet");
+  if(activeSheetStage&&sheet?.classList.contains("open")){
+    document.getElementById("stageSheetBody").innerHTML=stageSheetHtml(activeSheetStage);
+  }
+}
+
+function closeStageSheet({updateUrl=true}={}){
+  const sheet=document.getElementById("stageSheet");
+  if(!sheet) return;
+  sheet.classList.remove("open");
+  sheet.setAttribute("aria-hidden","true");
+  activeSheetStage=null;
+  updateSelectedVenue();
+  if(updateUrl){
+    setUrl(rootViewUrl(activeView),{replace:true});
+    resetMeta();
+  }
+}
+
 function openStagePopup(stage,{updateUrl=false,replaceUrl=false}={}){
+  if(isMobileViewport()){
+    openStageSheet(stage,{updateUrl,replaceUrl});
+    return;
+  }
   const loc=STAGE_LOCATIONS[stage];
   if(!venueMap||!mapLoaded||!hasCoords(loc)) return;
   if(updateUrl) setStageRoute(stage,{replace:replaceUrl});
@@ -833,6 +979,10 @@ function openStagePopup(stage,{updateUrl=false,replaceUrl=false}={}){
 }
 
 function focusStage(stage,{updateUrl=true,replaceUrl=false}={}){
+  if(isMobileViewport()){
+    openStageSheet(stage,{updateUrl,replaceUrl});
+    return;
+  }
   const loc=STAGE_LOCATIONS[stage];
   if(!venueMap||!hasCoords(loc)) return;
   if(!mapLoaded){
@@ -905,6 +1055,7 @@ function renderMapView(){
   renderLiveList("soonList","soonCount",soonItems,"soon");
   updateVenueMarkers(snapshots);
   updateUserMarker(false);
+  refreshStageSheet();
 }
 
 function setView(view,{askLocation=false,updateHash=true}={}){

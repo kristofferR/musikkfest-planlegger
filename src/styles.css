@@ -1462,3 +1462,156 @@ body.chips-visible main{padding-top:calc(var(--header-h) + var(--tabs-h) + 37px 
   }
   body.map-active .favorite-filter-btn.active{background:#f3b924;border-color:#e0ac15;color:#1a1814}
 }
+
+/* ============================================================
+   iOS-style detail sheets (artist + stage) — mobile (≤640px) only.
+   Desktop keeps the centered event modal and the map info-boxes; these
+   rules turn the event modal into a full-height bottom sheet and add the
+   stage sheet, both with a grab handle and swipe-to-dismiss.
+   ============================================================ */
+.event-modal-grip,.sheet-grip{display:none}
+.sheet-overlay{display:none}
+.event-modal-scroll{display:contents}
+
+@media (max-width:640px){
+  /* —— shared sheet chrome —— */
+  .event-modal-overlay,.sheet-overlay{
+    display:flex;align-items:flex-end;justify-content:center;
+    position:fixed;inset:0;z-index:520;padding:0;
+    background:rgba(0,0,0,calc(.5*(1 - var(--sheet-drag,0))));
+    visibility:hidden;opacity:0;pointer-events:none;
+    transition:opacity .28s ease,visibility .28s ease,background .12s linear;
+    overscroll-behavior:contain;
+  }
+  /* align-items here (not just on the base rule) so it beats the desktop
+     .event-modal-overlay.open{align-items:center} — sheets anchor to the bottom. */
+  .event-modal-overlay.open,.sheet-overlay.open{visibility:visible;opacity:1;pointer-events:auto;align-items:flex-end}
+  /* The artist sheet stacks above the stage sheet it was opened from. */
+  .event-modal-overlay{z-index:530}
+  /* Stage sheet = iOS medium detent: no dark backdrop, the map stays visible and
+     interactive above it (only the panel catches touches), medium height. */
+  .sheet-overlay{background:transparent}
+  .sheet-overlay.open{pointer-events:none}
+  .sheet-overlay .sheet{pointer-events:auto;max-height:64dvh}
+  .event-modal,.sheet{
+    position:relative;width:100%;max-width:600px;margin:0;
+    height:auto;max-height:94dvh;
+    border:0;border-radius:24px 24px 0 0;
+    background:
+      radial-gradient(125% 70% at 6% -6%,rgba(212,82,42,.13),transparent 56%),
+      radial-gradient(125% 70% at 100% -8%,rgba(243,185,36,.11),transparent 54%),
+      var(--bg);
+    box-shadow:0 -18px 60px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;overflow:hidden;
+    transform:translateY(100%);
+    transition:transform .34s cubic-bezier(.32,.72,0,1);
+  }
+  .event-modal-overlay.open .event-modal,.sheet-overlay.open .sheet{transform:translateY(0)}
+  .event-modal.is-dragging,.sheet.is-dragging{transition:none}
+  .event-modal-grip,.sheet-grip{
+    display:block;flex:0 0 auto;width:38px;height:5px;border-radius:999px;
+    background:var(--faint);opacity:.5;margin:9px auto 2px;
+  }
+  .event-modal-close,.sheet-close{
+    position:absolute;top:12px;right:14px;z-index:6;
+    width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);border-radius:999px;
+    background:rgba(var(--surface-rgb),.82);color:var(--text);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    font-size:var(--fs-22);line-height:1;cursor:pointer;padding:0;
+  }
+
+  /* —— event / artist sheet —— */
+  .event-modal-scroll{
+    display:flex;flex-direction:column;gap:16px;
+    flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+    padding:6px 18px calc(env(safe-area-inset-bottom,0px) + 32px);
+  }
+  .event-modal-media{
+    display:block;flex:0 0 auto;border:1px solid var(--border);border-radius:20px;
+    overflow:hidden;background:var(--surface-muted);margin:0;
+  }
+  .event-modal-media img{width:100%;height:220px;max-height:220px;object-fit:cover;display:block}
+  .event-modal-media.is-loading{min-height:220px}
+  .event-modal.no-media .event-modal-media{display:none}
+  .event-modal-body{padding:0;display:flex;flex-direction:column;gap:14px}
+  .event-modal-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+  .event-modal-kicker{font-family:var(--mono);font-size:var(--fs-12);color:var(--muted);margin-bottom:6px}
+  .event-modal-title{font-size:var(--fs-28);font-weight:700;line-height:1.12;margin:0}
+  .event-modal-stage{
+    margin-top:8px;border:0;background:transparent;padding:0;cursor:pointer;
+    font-family:var(--font);font-size:var(--fs-15);font-weight:500;color:var(--accent2);text-align:left;
+  }
+  .event-modal-stage:disabled{display:none}
+  .event-modal-favorite{
+    width:42px;height:42px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);border-radius:12px;background:var(--surface);
+    color:#a47706;font-size:var(--fs-25);line-height:1;cursor:pointer;
+  }
+  .event-modal-favorite.active{background:#f3b924;border-color:#d79d05;color:#1a1814}
+  .event-modal-description-wrap{position:static}
+  .event-modal-description{
+    max-height:none;overflow:visible;font-size:var(--fs-16);line-height:1.5;color:var(--text);
+    display:flex;flex-direction:column;gap:10px;padding:0;
+  }
+  .event-modal-scrollbar,.event-modal-description-wrap::after{display:none}
+  .event-modal-empty{font-size:var(--fs-15);color:var(--muted)}
+  .event-modal-actions{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+  .event-modal-action{
+    flex:0 0 auto;width:100%;min-height:50px;border-radius:14px;font-size:var(--fs-16);font-weight:500;
+    border:1px solid transparent;background:rgba(42,109,212,.12);color:var(--accent2);
+  }
+  .event-modal-action.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+
+  /* —— stage sheet —— */
+  .sheet-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:4px 56px 10px 18px}
+  .sheet-title{
+    font-size:var(--fs-20);font-weight:600;line-height:1.15;margin:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .sheet-body{
+    flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+    display:flex;flex-direction:column;gap:16px;
+    padding:2px 18px calc(env(safe-area-inset-bottom,0px) + 32px);
+  }
+  .sheet-nav{
+    display:flex;align-items:center;gap:12px;text-decoration:none;
+    padding:14px;border-radius:14px;background:rgba(42,109,212,.10);
+  }
+  .sheet-nav-icon{flex:0 0 auto;color:var(--accent2);display:inline-flex}
+  .sheet-nav-icon svg{width:24px;height:24px;display:block}
+  .sheet-nav-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .sheet-nav-address{
+    font-size:var(--fs-15);font-weight:500;color:var(--text);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .sheet-nav-sub{font-size:var(--fs-12);color:var(--accent2)}
+  .sheet-nav-arrow{flex:0 0 auto;color:var(--accent2);display:inline-flex}
+  .sheet-nav-arrow svg{width:18px;height:18px;display:block}
+  .sheet-distance{
+    display:flex;align-items:center;gap:7px;color:var(--accent2);
+    font-size:var(--fs-15);font-weight:500;margin:-4px 2px 0;
+  }
+  .sheet-walk-icon{width:18px;height:18px;flex:0 0 auto}
+  .sheet-info{font-size:var(--fs-13);line-height:1.5;color:var(--muted);margin:0}
+  .sheet-group{display:flex;flex-direction:column;gap:7px}
+  .sheet-group.dimmed{opacity:.5}
+  .sheet-group-title{
+    font-family:var(--mono);font-size:var(--fs-11);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);padding-left:2px;
+  }
+  .sheet-group.accent .sheet-group-title{color:var(--accent)}
+  .sheet-group-list{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .sheet-group.accent .sheet-group-list{background:rgba(212,82,42,.08);border-color:rgba(212,82,42,.3)}
+  .sheet-row{
+    display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;
+    width:100%;border:0;border-top:1px solid var(--border);background:transparent;text-align:left;cursor:pointer;
+    padding:12px 14px;font-family:var(--font);color:var(--text);
+  }
+  .sheet-group-list .sheet-row:first-child{border-top:0}
+  .sheet-group.accent .sheet-row{border-top-color:rgba(212,82,42,.22)}
+  .sheet-row:active{background:rgba(0,0,0,.04)}
+  .sheet-row-time{font-family:var(--mono);font-size:var(--fs-12);color:var(--faint);min-width:38px}
+  .sheet-row-artist{font-size:var(--fs-15);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sheet-empty{font-size:var(--fs-14);color:var(--muted);padding:8px 2px}
+}
