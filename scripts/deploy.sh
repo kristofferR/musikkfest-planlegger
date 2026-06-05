@@ -89,3 +89,16 @@ rsync -az --delete \
   --exclude "*.bak.*" \
   -e "ssh $SSH_OPTS" \
   "$DIST_DIR/" "$HOST:$TARGET"
+
+# rsync -a stamps the deployed tree with the *source* (local) ownership, which
+# leaves the webroot un-writable by the site's php-fpm user. The named-list
+# feature writes a per-slug index.php into the webroot at save time, so the PHP
+# user must own it. Re-chown the webroot (incl. protected slug dirs) to the site
+# owner after every deploy.
+ssh $SSH_OPTS "$HOST" "TARGET_DIR=$REMOTE_TARGET sh -s" <<'REMOTE_CHOWN_SH'
+set -eu
+target=${TARGET_DIR%/}
+site_root=$(dirname -- "$target")
+owner=$(stat -c '%U:%G' "$site_root")
+chown -R "$owner" "$target"
+REMOTE_CHOWN_SH

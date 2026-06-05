@@ -299,15 +299,20 @@ function mf_unique_slug(string $base, string $token, array $store): string {
 
 function mf_write_slug_route(string $slug): void {
     $dir = mf_slug_directory($slug);
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0755, true);
+    // Fail loudly: a silently-dropped write here yields a /musikkfest/<slug> URL
+    // that 404s-to-SPA (no favourites load). Surface it so the save reports an
+    // error instead of returning a dead permanent URL.
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+        throw new RuntimeException('Kunne ikke opprette rute-mappe for liste.');
     }
-    @file_put_contents($dir . '/.musikkfest-list', $slug . "\n");
     $php = "<?php\n"
         . "declare(strict_types=1);\n\n"
         . '$_GET[' . var_export(MF_LIST_PARAM, true) . '] = ' . var_export($slug, true) . ";\n"
         . "require __DIR__ . '/../share.php';\n";
-    @file_put_contents($dir . '/index.php', $php);
+    if (@file_put_contents($dir . '/index.php', $php) === false) {
+        throw new RuntimeException('Kunne ikke skrive rute-fil for liste.');
+    }
+    @file_put_contents($dir . '/.musikkfest-list', $slug . "\n");
     @chmod($dir, 0755);
     @chmod($dir . '/index.php', 0644);
     @chmod($dir . '/.musikkfest-list', 0644);
