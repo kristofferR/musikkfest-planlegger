@@ -46,7 +46,7 @@ stageSheet?.addEventListener("click",e=>{ if(e.target===stageSheet) closeStageSh
 
 // iOS-style swipe-to-dismiss for both detail sheets (mobile only).
 attachSheetSwipe(eventModal,eventModal.querySelector(".event-modal"),
-  ()=>eventModal.querySelector(".event-modal-scroll"),()=>closeEventDetails());
+  ()=>eventModal.querySelector(".event-modal-description"),()=>closeEventDetails());
 if(stageSheet){
   attachSheetSwipe(stageSheet,stageSheet.querySelector(".sheet"),
     ()=>document.getElementById("stageSheetBody"),()=>closeStageSheet());
