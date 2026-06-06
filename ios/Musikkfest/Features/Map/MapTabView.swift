@@ -162,7 +162,7 @@ struct MapTabView: View {
 
             HStack(spacing: 8) {
                 if model.hasActiveFilters {
-                    filterPill("Filtrert.", tint: Theme.accent)
+                    filterPill("Filtrert", tint: Theme.accent)
                 } else if !filterHintSeen {
                     filterPill("Filter", tint: Theme.textPrimary)
                 }

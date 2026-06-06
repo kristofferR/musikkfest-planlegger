@@ -319,7 +319,7 @@ document.getElementById("locateBtn").addEventListener("click",requestUserLocatio
 // Mobile Kart: floating glass controls + "spiller nå/snart" segmented toggle.
 document.getElementById("mapLocateFab")?.addEventListener("click",locateAndCenter);
 document.getElementById("mapFilterFab")?.addEventListener("click",openDrawer);
-// Tapping the "Filtrert." flag clears all active filters.
+// Tapping the "Filtrert" flag clears all active filters.
 document.getElementById("mapFilterFlag")?.addEventListener("click",clearMapFilters);
 // "Søk" is a shortcut into the same filter sheet, focused on its search field.
 document.getElementById("mapSearchFab")?.addEventListener("click",()=>{
