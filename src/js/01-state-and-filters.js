@@ -15,7 +15,8 @@ const EVENT_DATE = "2026-06-06";
 const EVENT_DATE_LABEL = "6. juni";
 const EVENT_NEXT_DATE = "2026-06-07";
 const EVENT_TIME_ZONE_OFFSET = "+02:00";
-const SET_DURATION_MIN = 45;
+// Fallback set length for the last act at a stage (no next slot to run until).
+const SET_DURATION_MIN = 120;
 const CARTO_VOYAGER_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 const CARTO_DARK_MATTER_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const OSLO_CENTER = [10.750721867246659,59.929923983287885];
