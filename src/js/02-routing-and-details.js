@@ -331,7 +331,13 @@ function openEventDetails(ev,{updateUrl=true,replaceUrl=false}={}){
   }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden","false");
-  lockPageScroll(modal);
+  // On mobile this is a bottom sheet sitting over the Kart view, whose map is
+  // position:sticky. The fixed-body scroll lock would collapse that sticky map
+  // (it scrolls off-screen, revealing the live list behind the scrim). The
+  // stage sheet keeps the map visible by not locking; match it. The full-screen
+  // overlay still catches touches, so the background can't be scrolled away.
+  // Desktop is a centred dialog and still needs the lock.
+  if(!isMobileViewport()) lockPageScroll(modal);
   syncEventModalDescriptionScroll();
   document.getElementById("eventModalClose").focus();
 }
