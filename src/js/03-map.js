@@ -281,8 +281,9 @@ function scheduleSnapshots(clock=festivalClock()){
 
     events.forEach((ev,index)=>{
       const includeEvent=matches(ev);
-      const nextStart=events[index+1]?.min??ev.min+SET_DURATION_MIN;
-      const inferredEnd=Math.min(nextStart,ev.min+SET_DURATION_MIN);
+      // An act runs until the next slot at the same stage; only the last act of
+      // the day falls back to a fixed set length.
+      const inferredEnd=events[index+1]?.min??ev.min+SET_DURATION_MIN;
       if(includeEvent&&clock.mode==="live"&&clock.min>=ev.min&&clock.min<inferredEnd){
         current={...ev,endMin:inferredEnd};
       }
@@ -860,8 +861,9 @@ function stageEventGroups(stage,clock=festivalClock()){
   events.forEach((ev,index)=>{
     if(clock.mode==="before"){coming.push(ev);return;}
     if(clock.mode==="after"){done.push(ev);return;}
-    const nextStart=events[index+1]?.min??ev.min+SET_DURATION_MIN;
-    const inferredEnd=Math.min(nextStart,ev.min+SET_DURATION_MIN);
+    // Each act stays "now playing" until the next slot at the stage begins; the
+    // last act of the day falls back to a fixed set length.
+    const inferredEnd=events[index+1]?.min??ev.min+SET_DURATION_MIN;
     if(clock.min>=ev.min&&clock.min<inferredEnd) now.push(ev);
     else if(ev.min>clock.min) coming.push(ev);
     else done.push(ev);
