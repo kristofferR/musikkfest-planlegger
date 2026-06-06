@@ -1,12 +1,19 @@
 // Concatenated by scripts/build.mjs. Keep files ordered by numeric prefix.
 // ── DRAWER ──
 const overlay = document.getElementById("drawerOverlay");
+const drawer = document.getElementById("drawer");
 const filterBtn = document.getElementById("filterBtn");
 const infoModal = document.getElementById("infoModal");
 const infoToggle = document.getElementById("infoToggle");
 const infoModalClose = document.getElementById("infoModalClose");
 const themeToggle = document.getElementById("themeToggle");
 const textSizeToggle = document.getElementById("textSizeToggle");
+function openDrawer(){
+  overlay.classList.add("open");
+}
+function closeDrawer(){
+  overlay.classList.remove("open");
+}
 themeToggle.addEventListener("click",()=>setTheme(currentTheme()==="dark"?"light":"dark"));
 textSizeToggle.addEventListener("click",()=>{
   setTextSizeLarge(!textSizeLarge());
@@ -16,9 +23,9 @@ textSizeToggle.addEventListener("click",()=>{
 });
 updateThemeToggle();
 updateTextSizeToggle();
-filterBtn.addEventListener("click",()=>overlay.classList.add("open"));
-document.getElementById("drawerClose").addEventListener("click",()=>overlay.classList.remove("open"));
-overlay.addEventListener("click",e=>{ if(e.target===overlay) overlay.classList.remove("open"); });
+filterBtn.addEventListener("click",openDrawer);
+document.getElementById("drawerClose").addEventListener("click",closeDrawer);
+overlay.addEventListener("click",e=>{ if(e.target===overlay) closeDrawer(); });
 document.getElementById("clearAll").addEventListener("click",clearAllFilters);
 function openInfoModal(){
   infoModal.classList.add("open");
@@ -44,7 +51,8 @@ const stageSheet=document.getElementById("stageSheet");
 document.getElementById("stageSheetClose")?.addEventListener("click",()=>closeStageSheet());
 stageSheet?.addEventListener("click",e=>{ if(e.target===stageSheet) closeStageSheet(); });
 
-// iOS-style swipe-to-dismiss for both detail sheets (mobile only).
+// iOS-style swipe-to-dismiss for the filter drawer and detail sheets (mobile only).
+attachSheetSwipe(overlay,drawer,()=>drawer.querySelector(".drawer-body"),closeDrawer);
 attachSheetSwipe(eventModal,eventModal.querySelector(".event-modal"),
   ()=>eventModal.querySelector(".event-modal-description"),()=>closeEventDetails());
 if(stageSheet){
@@ -310,12 +318,12 @@ document.querySelectorAll(".view-tab").forEach(tab=>{
 document.getElementById("locateBtn").addEventListener("click",requestUserLocation);
 // Mobile Kart: floating glass controls + "spiller nå/snart" segmented toggle.
 document.getElementById("mapLocateFab")?.addEventListener("click",locateAndCenter);
-document.getElementById("mapFilterFab")?.addEventListener("click",()=>overlay.classList.add("open"));
+document.getElementById("mapFilterFab")?.addEventListener("click",openDrawer);
 // Tapping the "Filtrert." flag clears all active filters.
 document.getElementById("mapFilterFlag")?.addEventListener("click",clearMapFilters);
 // "Søk" is a shortcut into the same filter sheet, focused on its search field.
 document.getElementById("mapSearchFab")?.addEventListener("click",()=>{
-  overlay.classList.add("open");
+  openDrawer();
   requestAnimationFrame(()=>document.getElementById("drawerSearchInput")?.focus());
 });
 document.getElementById("drawerSearchInput")?.addEventListener("input",e=>{
