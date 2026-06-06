@@ -24,6 +24,7 @@ struct EventDetailView: View {
                 }
                 actions
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Spacing.large)
             .padding(.bottom, Spacing.xxLarge)
         }
@@ -42,22 +43,30 @@ struct EventDetailView: View {
     }
 
     private func artwork(_ url: URL) -> some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable().scaledToFill()
-            case .empty:
-                Rectangle().fill(Theme.surfaceMuted).overlay(ProgressView())
-            default:
-                // No fallback placeholder — collapse to a quiet muted fill on failure.
-                Rectangle().fill(Theme.surfaceMuted)
+        // Color.clear fixes the layout footprint (full width × 220); the image
+        // rides as an overlay so a scaledToFill image — which is scaled to be
+        // far wider than the frame — can never drive the ScrollView's content
+        // width. That leak was pushing the whole detail view sideways (clipped
+        // on both edges) for events with a real, wide artwork image.
+        Color.clear
+            .frame(maxWidth: .infinity)
+            .frame(height: 220)
+            .overlay {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .empty:
+                        Rectangle().fill(Theme.surfaceMuted).overlay(ProgressView())
+                    default:
+                        // No fallback placeholder — collapse to a quiet muted fill on failure.
+                        Rectangle().fill(Theme.surfaceMuted)
+                    }
+                }
             }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 220)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
     }
 
     private var header: some View {
