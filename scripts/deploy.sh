@@ -3,8 +3,16 @@ set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DIST_DIR="$ROOT_DIR/dist"
-HOST=${MUSIKKFEST_DEPLOY_HOST:-user@server}
-TARGET=${MUSIKKFEST_DEPLOY_TARGET:-/path/to/www/musikkfest/}
+
+# Server details stay out of git: copy scripts/deploy.env.example to scripts/deploy.env.
+ENV_FILE="$ROOT_DIR/scripts/deploy.env"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Missing $ENV_FILE. Copy scripts/deploy.env.example and fill it in." >&2
+  exit 1
+fi
+. "$ENV_FILE"
+HOST=${MUSIKKFEST_DEPLOY_HOST:?Set MUSIKKFEST_DEPLOY_HOST in scripts/deploy.env}
+TARGET=${MUSIKKFEST_DEPLOY_TARGET:?Set MUSIKKFEST_DEPLOY_TARGET in scripts/deploy.env}
 CONTROL=${MUSIKKFEST_DEPLOY_CONTROL:-/tmp/musikkfest-deploy.sock}
 
 shell_quote() {
@@ -32,8 +40,7 @@ PROTECT_FILE=$(mktemp)
 trap 'rm -f "$PROTECT_FILE"' EXIT
 
 REMOTE_TARGET=$(shell_quote "$TARGET")
-# Host path of the PHP container's MUSIKKFEST_STORAGE_DIR (/data/musikkfest).
-REMOTE_STORAGE_OVERRIDE=$(shell_quote "${MUSIKKFEST_STORAGE_DIR:-/path/to/data/musikkfest}")
+REMOTE_STORAGE_OVERRIDE=$(shell_quote "${MUSIKKFEST_STORAGE_DIR:-}")
 
 ssh $SSH_OPTS "$HOST" "TARGET_DIR=$REMOTE_TARGET STORAGE_OVERRIDE=$REMOTE_STORAGE_OVERRIDE sh -s" <<'REMOTE_STORAGE_SH'
 set -eu

@@ -57,8 +57,7 @@ Apne deretter `http://127.0.0.1:8766/musikkfest/`.
 
 ## Deploy
 
-Deploy-scriptet bygger `dist/` og synker bare produksjonsfiler til `/path/to/www/musikkfest/` på serveren (server), som serveres på https://suboktav.no/musikkfest/.
-Ha SSH-nøkkel eller en åpen SSH ControlMaster til serveren først.
+Deploy-scriptet bygger `dist/` og synker bare produksjonsfiler til serveren. Serverdetaljene ligger ikke i repoet: kopier `scripts/deploy.env.example` til `scripts/deploy.env` (gitignored) og fyll inn SSH-mål, webkatalog og lagringskatalog.
 
 ```bash
 ./scripts/deploy.sh
@@ -66,9 +65,9 @@ Ha SSH-nøkkel eller en åpen SSH ControlMaster til serveren først.
 
 Sett `MUSIKKFEST_SKIP_BUILD=1` hvis du vil deploye et eksisterende `dist/` uten å bygge på nytt.
 
-suboktav.no kjører i et Docker-oppsett i `/path/to/site`: Caddy og PHP-FPM i hver sin container. Caddy-configen der (snippeten `musikkfest_app`) setter sikkerhetsheadere og `Cache-Control` for assets, og serverer de ferdigkomprimerte `.gz`-filene. PHP-imaget har GD og fontene som delingsbildene bruker.
+Serveren trenger PHP med GD og mbstring, og fontene DejaVu og URW Nimbus for delingsbildene. Assets bør serveres med `Cache-Control: public, max-age=2592000, immutable` og de ferdigkomprimerte `.gz`-filene.
 
-Runtime-data for delbare lister ligger i `/path/to/data/musikkfest` på serveren, utenfor repoet og webroot, og skal ikke committes. Sett `MUSIKKFEST_STORAGE_DIR` hvis lagringskatalogen må overstyres.
+Runtime-data for delbare lister ligger utenfor repoet og webroot på serveren, og skal ikke committes. Appen leser katalogen fra `MUSIKKFEST_STORAGE_DIR`.
 
 ## Lisens
 

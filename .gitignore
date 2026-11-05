@@ -8,3 +8,6 @@ node_modules/
 .musikkfest-lister/
 .musikkfest-list
 */.musikkfest-list
+
+# Server details for scripts/deploy.sh (see scripts/deploy.env.example)
+scripts/deploy.env
