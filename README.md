@@ -57,7 +57,7 @@ Apne deretter `http://127.0.0.1:8766/musikkfest/`.
 
 ## Deploy
 
-Deploy-scriptet bygger `dist/` og synker bare produksjonsfiler til `/path/to/www/musikkfest/` på serveren (server).
+Deploy-scriptet bygger `dist/` og synker bare produksjonsfiler til `/path/to/www/musikkfest/` på serveren (server), som serveres på https://suboktav.no/musikkfest/.
 Ha SSH-nøkkel eller en åpen SSH ControlMaster til serveren først.
 
 ```bash
@@ -66,7 +66,7 @@ Ha SSH-nøkkel eller en åpen SSH ControlMaster til serveren først.
 
 Sett `MUSIKKFEST_SKIP_BUILD=1` hvis du vil deploye et eksisterende `dist/` uten å bygge på nytt.
 
-Serveren kjører Caddy og PHP-FPM. Caddy-configen (`/etc/caddy/Caddyfile` på serveren) setter sikkerhetsheadere og `Cache-Control` for assets, og serverer de ferdigkomprimerte `.gz`-filene.
+Serveren kjører Caddy og PHP-FPM. Caddy-configen (snippeten `musikkfest` i `/etc/caddy/Caddyfile` på serveren) setter sikkerhetsheadere og `Cache-Control` for assets, og serverer de ferdigkomprimerte `.gz`-filene.
 
 Runtime-data for delbare lister ligger i `/path/to/data/musikkfest` på serveren, utenfor repoet og webroot, og skal ikke committes. Sett `MUSIKKFEST_STORAGE_DIR` hvis lagringskatalogen må overstyres.
 
