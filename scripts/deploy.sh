@@ -32,7 +32,7 @@ PROTECT_FILE=$(mktemp)
 trap 'rm -f "$PROTECT_FILE"' EXIT
 
 REMOTE_TARGET=$(shell_quote "$TARGET")
-# Same directory as env[MUSIKKFEST_STORAGE_DIR] in the server's PHP-FPM pool.
+# Host path of the PHP container's MUSIKKFEST_STORAGE_DIR (/data/musikkfest).
 REMOTE_STORAGE_OVERRIDE=$(shell_quote "${MUSIKKFEST_STORAGE_DIR:-/path/to/data/musikkfest}")
 
 ssh $SSH_OPTS "$HOST" "TARGET_DIR=$REMOTE_TARGET STORAGE_OVERRIDE=$REMOTE_STORAGE_OVERRIDE sh -s" <<'REMOTE_STORAGE_SH'

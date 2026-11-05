@@ -66,7 +66,7 @@ Ha SSH-nøkkel eller en åpen SSH ControlMaster til serveren først.
 
 Sett `MUSIKKFEST_SKIP_BUILD=1` hvis du vil deploye et eksisterende `dist/` uten å bygge på nytt.
 
-Serveren kjører Caddy og PHP-FPM. Caddy-configen (snippeten `musikkfest` i `/etc/caddy/Caddyfile` på serveren) setter sikkerhetsheadere og `Cache-Control` for assets, og serverer de ferdigkomprimerte `.gz`-filene.
+suboktav.no kjører i et Docker-oppsett i `/path/to/site`: Caddy og PHP-FPM i hver sin container. Caddy-configen der (snippeten `musikkfest_app`) setter sikkerhetsheadere og `Cache-Control` for assets, og serverer de ferdigkomprimerte `.gz`-filene. PHP-imaget har GD og fontene som delingsbildene bruker.
 
 Runtime-data for delbare lister ligger i `/path/to/data/musikkfest` på serveren, utenfor repoet og webroot, og skal ikke committes. Sett `MUSIKKFEST_STORAGE_DIR` hvis lagringskatalogen må overstyres.
 
